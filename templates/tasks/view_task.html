@@ -1,0 +1,14 @@
+{% extends '_base.html' %}
+
+{% block content %}
+    <h1>Task title</h1>
+    {{ task.title }}
+    <h2>Task description</h2>
+    {{ task.description }}
+    <h2>Group assigned by this task</h2>
+    {{ task.group }}
+    <h1>Manage task</h1>
+    <a href="{% url 'edit_task' task.id %}">Edit task</a>
+    <br>
+    <a href="{% url 'delete_task' task.id %}">Delete task</a>
+{% endblock %}
