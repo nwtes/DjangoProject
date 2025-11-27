@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from classrooms.models import ClassGroup,Subject
+from classrooms.models import ClassGroup,Subject,GroupMembership
 from assignments.models import Task
 from .forms import TaskCreationForm
 # Create your views here.
@@ -8,7 +8,14 @@ def home_view(request):
     return render(request,"home.html")
 
 def student_dashboard_view(request):
-    return render(request,"dashboard/student.html")
+    student = request.user.profile
+    membership = GroupMembership.objects.filter(student = student)
+    groups = [m.group for m in membership]
+    tasks = Task.objects.filter(group__groupmembership__student=student)
+    return render(request,"dashboard/student.html", {
+        "groups" : groups,
+        "tasks" : tasks
+    })
 def teacher_dashboard_view(request):
     teacher = request.user.profile
     subject = Subject.objects.filter(teacher=teacher)

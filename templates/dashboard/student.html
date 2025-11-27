@@ -1,1 +1,15 @@
 {% extends '_base.html' %}
+
+
+{% block content %}
+
+    <h1>Hello ,{{ user.username }}</h1>
+    <h2>Your groups: </h2>
+    {% for g in groups %}
+        {{ g.name }}
+    {% endfor %}
+    <h2>Your tasks: </h2>
+    {% for t in tasks %}
+        <a href="{% url 'task' t.id %}">{{ t.title }}</a>
+    {% endfor %}
+{% endblock %}

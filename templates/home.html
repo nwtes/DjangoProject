@@ -6,7 +6,7 @@
     {% if user.profile.role == 'teacher' %}
         <a href="{% url 'teacher_dashboard' %}">Dashboard</a>
     {% elif user.profile.role == 'student'  %}
-        <a href="{% url 'teacher_dashboard' %}">Dashboard</a>
+        <a href="{% url 'student_dashboard' %}">Dashboard</a>
     {% else  %}
         <p> You are not teacher or student </p>
     {% endif %}
