@@ -10,5 +10,8 @@
     <h1>Manage task</h1>
     <a href="{% url 'edit_task' task.id %}">Edit task</a>
     <br>
-    <a href="{% url 'delete_task' task.id %}">Delete task</a>
+    <form method="POST" action="{% url 'delete_task' task.id %}">
+        {% csrf_token %}
+        <button type="submit">Delete</button>
+    </form>
 {% endblock %}

@@ -45,6 +45,29 @@ def task_page_view(request, task_id):
     task = get_object_or_404(Task, id = task_id, created_by = teacher)
     return render(request,'tasks/view_task.html',{"task":task})
 def task_page_edit(request,task_id):
-    pass
+    teacher = request.user.profile
+
+    task = get_object_or_404(Task, id = task_id,created_by = teacher)
+
+    allowed_groups = ClassGroup.objects.filter(subject__teacher = teacher)
+
+    if request.method == "POST":
+        form = TaskCreationForm(request.POST, instance = task)
+        form.fields['group'].queryset = allowed_groups
+
+        if form.is_valid():
+            form.save()
+            return redirect("view_task",task_id = task.id)
+    else:
+        form = TaskCreationForm(instance = task)
+        form.fields['group'].queryset = allowed_groups
+    return render(request,"tasks/edit_task.html",{"form":form , "task" : task})
 def task_page_delete(request,task_id):
-    pass
+    teacher = request.user.profile
+
+    task = get_object_or_404(Task,id = task_id,created_by = teacher)
+
+    if request.method == "POST":
+        task.delete()
+        return redirect("teacher_dashboard")
+    return render(request,'home.html')
