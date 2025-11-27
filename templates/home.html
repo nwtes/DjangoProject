@@ -2,6 +2,14 @@
 
 {% block content %}
     <h2>home page</h2>
+    <h3>Visit your dashboard:</h3>
+    {% if user.profile.role == 'teacher' %}
+        <a href="{% url 'teacher_dashboard' %}">Dashboard</a>
+    {% elif user.profile.role == 'student'  %}
+        <a href="{% url 'teacher_dashboard' %}">Dashboard</a>
+    {% else  %}
+        <p> You are not teacher or student </p>
+    {% endif %}
     {% if user.is_authenticated %}
         <p>You are logged in as {{ user.email }} and your role is {{ user.profile.role }}</p>
         <form action="{% url 'logout' %}" method="post">

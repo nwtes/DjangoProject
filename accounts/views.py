@@ -32,8 +32,8 @@ class RoleBasedLoginView(LoginView):
         role = user.profile.role
 
         if role == "teacher":
-            return "/teacher/dashboard/"
+            return "/teacher/dashboard"
         elif role == "student":
-            return "/student/dashboard/"
+            return "/student/dashboard"
         else:
             return "/"
