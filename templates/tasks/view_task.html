@@ -14,4 +14,8 @@
         {% csrf_token %}
         <button type="submit">Delete</button>
     </form>
+    <p>Task submissions:</p>
+    {% for s in submission %}
+        <a href="{% url 'submission' s.id %}">Submission by {{ s.student }} from {{ s.task.group }}</a>
+    {% endfor %}
 {% endblock %}

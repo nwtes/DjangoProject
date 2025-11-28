@@ -35,7 +35,7 @@ class Profile(models.Model):
         ]'''
 
     def __str__(self):
-        return f"{self.user.username} is a {self.role}"
+        return f"{self.user.username}"
 
 
 @receiver(post_save, sender=User)

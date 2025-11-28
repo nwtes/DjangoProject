@@ -1,0 +1,12 @@
+{% extends '_base.html' %}
+
+
+{% block content %}
+
+    <h2>Your submission for task {{ submission.task.title }}</h2>
+    <p>{{ submission.content }}</p>
+    <h3>Teacher's grade : </h3>
+    {{ submission.grade }}
+    <h3>Teacher's comment :</h3>
+    {{ submission.comment }}
+{% endblock %}

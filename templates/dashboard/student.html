@@ -12,4 +12,8 @@
     {% for t in tasks %}
         <a href="{% url 'task' t.id %}">{{ t.title }}</a>
     {% endfor %}
+    <h2>Your submission: </h2>
+        {% for s in submission %}
+            <a href="{% url 'student_submission' s.id %}">Submission for task {{ s.task.title }}</a>
+        {% endfor %}
 {% endblock %}

@@ -1,0 +1,14 @@
+{% extends "_base.html" %}
+
+{% block content %}
+    <h1>Submission for task {{ submission.task.title }} by student {{ submission.student }} from {{ submission.task.group }}</h1>
+    <p>Task description:</p>
+    <p>{{ submission.task.description }}</p>
+    <p>Students submission:</p>
+    <p>{{ submission.content }}</p>
+    <form method="POST">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Grade</button>
+    </form>
+{% endblock %}
