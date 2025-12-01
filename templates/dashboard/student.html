@@ -1,19 +1,60 @@
 {% extends '_base.html' %}
 
-
 {% block content %}
 
-    <h1>Hello ,{{ user.username }}</h1>
-    <h2>Your groups: </h2>
-    {% for g in groups %}
-        {{ g.name }}
-    {% endfor %}
-    <h2>Your tasks: </h2>
-    {% for t in tasks %}
-        <a href="{% url 'task' t.id %}">{{ t.title }}</a>
-    {% endfor %}
-    <h2>Your submission: </h2>
-        {% for s in submission %}
-            <a href="{% url 'student_submission' s.id %}">Submission for task {{ s.task.title }}</a>
-        {% endfor %}
+
+    <div class="teacher-header">
+        <div class="pfp-placeholder">A</div>
+        <h1>{{ user.username }}</h1>
+        <a href="">Manage account</a>
+        <a href="">View tasks</a>
+        <a href="">View groups</a>
+        <a style="color:red;" href="">Logout</a>
+    </div>
+
+    <div class="teacher-body">
+        <div class="teacher-card-row">
+            {% for g in groups %}
+                <div class="card">
+                    <h2>Group {{ g.name }}</h2>
+                    <p>Teacher : {{ g.subject.teacher }}</p>
+                    <p>Open tasks: 3</p>
+                    <div class="card-links">
+                        <a href="">View Subject</a>
+                        <a href="{% url 'create_task' %}?subject={{ sub.id }}">View tasks</a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+       <div class="table-wrapper">
+            <div class="inbox-container">
+    <h2>Newest Ungraded Submissions</h2>
+
+    <table class="inbox-table">
+        <thead>
+            <tr>
+                <th>Task</th>
+                <th>Teacher</th>
+                <th>Group</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for t in tasks %}
+                <tr class="ungraded">
+                    <td>{{ t.title }}</td>
+                    <td>{{ t.created_by }}</td>
+                    <td>{{ t.group }}</td>
+                    <td><a class="grade-link" href="{% url 'task' t.id %}">Complete →</a></td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <a href="#" class="view-all">View All Submissions</a>
+    </div>
+       </div>
+
+        </div>
 {% endblock %}
