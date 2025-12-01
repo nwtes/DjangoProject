@@ -3,11 +3,12 @@ from classrooms.models import ClassGroup,Subject,GroupMembership
 from assignments.models import Task,Submission
 from .forms import TaskCreationForm
 from django.db.models import Count
+from .decorators import role_required
 # Create your views here.
 
 def home_view(request):
     return render(request,"home.html")
-
+@role_required('student')
 def student_dashboard_view(request):
     student = request.user.profile
     membership = GroupMembership.objects.filter(student = student)
@@ -19,6 +20,7 @@ def student_dashboard_view(request):
         "tasks" : tasks,
         "submission": submission
     })
+@role_required('teacher')
 def teacher_dashboard_view(request):
     teacher = request.user.profile
     subject = Subject.objects.filter(teacher=teacher)
@@ -36,7 +38,7 @@ def teacher_dashboard_view(request):
         "subjects": subjects,
         "submissions" : submissions
     })
-
+@role_required('teacher')
 def create_task(request):
     teacher = request.user.profile
 
@@ -67,6 +69,7 @@ def task_page_view(request, task_id):
     task = get_object_or_404(Task, id = task_id, created_by = teacher)
     submission = Submission.objects.filter(task = task)
     return render(request,'tasks/view_task.html',{"task":task,"submission" : submission})
+@role_required('teacher')
 def task_page_edit(request,task_id):
     teacher = request.user.profile
 
@@ -85,6 +88,7 @@ def task_page_edit(request,task_id):
         form = TaskCreationForm(instance = task)
         form.fields['group'].queryset = allowed_groups
     return render(request,"tasks/edit_task.html",{"form":form , "task" : task})
+@role_required('teacher')
 def task_page_delete(request,task_id):
     teacher = request.user.profile
 
