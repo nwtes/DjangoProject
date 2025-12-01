@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from classrooms.models import ClassGroup,Subject,GroupMembership
 from assignments.models import Task,Submission
 from .forms import TaskCreationForm
+from django.db.models import Count
 # Create your views here.
 
 def home_view(request):
@@ -23,18 +24,30 @@ def teacher_dashboard_view(request):
     subject = Subject.objects.filter(teacher=teacher)
     groups = ClassGroup.objects.filter(subject__teacher=teacher)
     tasks = Task.objects.filter(created_by = teacher)
+    submissions = Submission.objects.filter(task__created_by = teacher,grade__isnull = True)
+    subjects = Subject.objects.filter(teacher = teacher).annotate(
+        group_count = Count("classgroup"),
+        task_count = Count("classgroup__task")
+    )
     return render(request,"dashboard/teacher.html",{
         "subject" : subject,
         "groups" : groups,
-        'tasks' : tasks
+        'tasks' : tasks,
+        "subjects": subjects,
+        "submissions" : submissions
     })
 
 def create_task(request):
     teacher = request.user.profile
 
-    allowed_groups = ClassGroup.objects.filter(subject__teacher = teacher)
+    if request.GET.get("subject"):
+        subject = request.GET.get("subject")
+        allowed_groups = ClassGroup.objects.filter(subject = subject,subject__teacher=teacher)
+    else:
+        allowed_groups = ClassGroup.objects.filter(subject__teacher=teacher)
 
     if request.method == "POST":
+
         form = TaskCreationForm(request.POST)
         form.fields['group'].queryset = allowed_groups
 

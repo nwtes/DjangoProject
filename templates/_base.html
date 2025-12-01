@@ -1,3 +1,4 @@
+{% load static %}
 <!doctype html>
 <html lang="en">
 <head>
@@ -5,16 +6,21 @@
     <meta name="viewport"
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
     <title>Document</title>
 </head>
 <body>
-    <header>
-        <div>
-            <h1>base_header</h1>
-        </div>
+    <header class="fixed-header">
+        <a href="#">Home</a>
+        <a href="#">About</a>
+        <a href="#">Services</a>
+        <a href="#">Contact</a>
     </header>
-    {% block content %}
+    <div class="content">
+        {% block content %}
 
-    {% endblock %}
+        {% endblock %}
+    </div>
+
 </body>
 </html>

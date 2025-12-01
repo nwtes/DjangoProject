@@ -2,19 +2,61 @@
 
 {% block content %}
 
-    <h1>Hello, {{ user.username }}</h1>
-    <p>your subjects:</p>
-    {% for sub in subject %}
-        {{ sub.name }}
-    {% endfor %}
-    <p>your groups:</p>
-    {% for g in groups %}
-        {{ g.name }}
-    {% endfor %}
-    <p>Tasks you have created:</p>
-    {% for t in tasks %}
-        <a href="{% url 'view_task' t.id %}">{{ t.title }}</a>
-    {% endfor %}
-    <br>
-    <a href="{% url 'create_task' %}">Create task</a>
+
+    <div class="teacher-header">
+        <div class="pfp-placeholder">A</div>
+        <h1>{{ user.username }}</h1>
+        <a href="">Manage account</a>
+        <a href="">My groups</a>
+        <a href="">My tasks</a>
+        <a style="color:red;" href="">Logout</a>
+    </div>
+
+    <div class="teacher-body">
+        <div class="teacher-card-row">
+            {% for sub in subjects %}
+                <div class="card">
+                    <h2>{{ sub.name }}</h2>
+                    <p>Groups : {{ sub.group_count }}</p>
+                    <p>Tasks : {{ sub.task_count }}</p>
+                    <div class="card-links">
+                        <a href="">View Subject</a>
+                        <a href="{% url 'create_task' %}?subject={{ sub.id }}">Create task</a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+       <div class="table-wrapper">
+            <div class="inbox-container">
+    <h2>Newest Ungraded Submissions</h2>
+
+    <table class="inbox-table">
+        <thead>
+            <tr>
+                <th>Student</th>
+                <th>Group</th>
+                <th>Task</th>
+                <th>Submitted At</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for sub in submissions %}
+                <tr class="ungraded">
+                    <td>{{ sub.student }}</td>
+                    <td>{{ sub.task.group }}</td>
+                    <td>{{ sub.task.title }}</td>
+                    <td>{{ sub.submitted_at }}</td>
+                    <td><a class="grade-link" href="{% url 'submission' sub.id %}">Grade →</a></td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <a href="#" class="view-all">View All Submissions</a>
+    </div>
+       </div>
+
+        </div>
 {% endblock %}

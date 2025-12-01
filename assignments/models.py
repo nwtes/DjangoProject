@@ -13,7 +13,7 @@ class Task(models.Model):
         limit_choices_to = {"role" : "teacher"},
         related_name = "tasks"
     )
-    group = models.ForeignKey(ClassGroup,on_delete = models.CASCADE)
+    group = models.ForeignKey(ClassGroup,on_delete = models.CASCADE,related_name="task")
 
     def clean(self):
 
