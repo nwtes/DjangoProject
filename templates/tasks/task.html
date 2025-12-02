@@ -2,13 +2,18 @@
 
 
 {% block content %}
-    <h1>Task {{ task.title }}</h1>
-    <h2>Your task is to :</h2>
-    {{ task.description }}
-    <p>-----------------------------------------------------------------</p>
-    <form method = "POST">
-        {% csrf_token %}
-        <textarea name="message" id="" cols="30" rows="10"></textarea>
-        <button type="submit">Submit</button>
-    </form>
+    <div class="task-header">
+        <div class="header-title" onClick="toggleDesc(this)">
+            <h1>Task : {{ task.title }}</h1>
+            <h2>Teacher : {{ task.created_by }}</h2>
+            <span class="arrow">▼</span>
+        </div>
+        <div class="header-desc">
+            <p>{{ task.description }}</p>
+        </div>
+    </div>
+
+    <div class="task-body">
+        <div id="editor" style="height: 100%; border: 1px solid #ccc;"></div>
+    </div>
 {% endblock %}

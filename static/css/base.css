@@ -30,6 +30,7 @@ body {
     display: flex;
     flex-direction: column;
 }
+
 .teacher-header{
     border: 1px solid white;
     flex: 22%;
@@ -157,4 +158,67 @@ body {
 
 .view-all:hover {
     text-decoration: underline;
+}
+.task-header{
+    position: relative;
+    width: 100%;
+    background: black   ;
+    border-radius: 12px;
+    border: 1px solid #dcdcdc;
+    overflow: visible;
+    display:flex;
+
+
+}
+.task-body{
+    flex:78%;
+}
+.task-header:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+.header-title {
+     padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    cursor: pointer;
+    align-items:center;
+    width:100%;
+    background: black;
+    flex-direction:column;
+}
+.header-title:hover {
+    background: gray;
+}
+.arrow {
+    font-size: 20px;
+    transition: transform 0.3s ease;
+}
+.header-desc{
+     position: absolute;
+    top: 100%; /* right under the header */
+    left: 0;
+    width: 100%;
+    background: black;
+    border: 1px solid #d1d1d1;
+    border-radius: 8px;
+    padding: 20px;
+
+    opacity: 0;
+    pointer-events: none;
+
+    transform: translateY(-10px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    z-index: 50;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.task-header.open .header-desc {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+.task-header.open .arrow{
+    transform: rotate(180deg);
 }
