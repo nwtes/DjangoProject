@@ -20,7 +20,7 @@
             <p id="autosave-status"></p>
         </div>
         <div class="task-submit">
-            <button type="submit">Submit</button>
+            <a href="{% url 'submit' task.id %}">Submit Task</a>
         </div>
     </div>
     {{ autosave_url|json_script:"autosave-url-data" }}

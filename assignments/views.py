@@ -1,6 +1,6 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404 , redirect,reverse
-from .models import Task,Submission
+from .models import Task,Submission,FinalSubmission
 from .forms import GradingForm
 from django.http import JsonResponse
 from django.middleware.csrf import get_token
@@ -68,3 +68,19 @@ def autosave_task(request, task_id):
         submission.save()
         return JsonResponse({"saved_at": "Saved!"})
     return JsonResponse({"error": "Invalid request"}, status=400)
+
+
+def submit_task(request,task_id):
+    student = request.user.profile
+    task = get_object_or_404(Task,id = task_id)
+
+    submission = get_object_or_404(Submission,task = task,student = student)
+
+    final_submission ,created = FinalSubmission.objects.get_or_create(
+        submission = submission,
+    )
+    task.submitted = True
+    task.save()
+    if created:
+        pass
+    return redirect("student_dashboard")

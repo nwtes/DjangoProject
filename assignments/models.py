@@ -36,8 +36,15 @@ class Submission(models.Model):
     )
     content = models.TextField()
     submitted_at = models.DateTimeField(auto_now_add = True)
+    submitted = models.BooleanField(default = False)
     grade = models.IntegerField(null = True,blank = True)
     comment = models.TextField(null = True,blank = True)
 
     class Meta:
         unique_together = ('task','student')
+
+class FinalSubmission(models.Model):
+    submission = models.OneToOneField('Submission',on_delete = models.CASCADE,null=True,blank=True)
+    submitted_at = models.DateTimeField(auto_now_add = True)
+    def __str__(self):
+        return f"{self.submission.student} - {self.submission.task}"
