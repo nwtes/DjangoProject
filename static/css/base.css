@@ -172,6 +172,9 @@ body {
 }
 .task-body{
     flex:78%;
+    display:flex;
+    flex-direction: column;
+    width: 100%;
 }
 .task-header:hover {
     box-shadow: 0 4px 12px rgba(0,0,0,0.12);
@@ -221,4 +224,15 @@ body {
 }
 .task-header.open .arrow{
     transform: rotate(180deg);
+}
+.task-submit{
+    flex: 15%;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    width: 100%;
+}
+.task-status{
+
+    flex: 15%;
 }

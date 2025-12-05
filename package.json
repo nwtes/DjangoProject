@@ -1,0 +1,32 @@
+{
+  "name": "djangoproject",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nwtes/DjangoProject.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/nwtes/DjangoProject/issues"
+  },
+  "homepage": "https://github.com/nwtes/DjangoProject#readme",
+  "dependencies": {
+    "@codemirror/commands": "^6.1.2",
+    "@codemirror/lang-javascript": "^6.1.1",
+    "@codemirror/search": "^6.2.3",
+    "@codemirror/theme-one-dark": "^6.1.0",
+    "@codemirror/view": "^6.6.0",
+    "@rollup/plugin-node-resolve": "^15.0.1",
+    "minify": "^9.1.0",
+    "rollup": "^3.5.1",
+    "vite": "^7.2.6"
+  }
+}

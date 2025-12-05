@@ -1,5 +1,5 @@
 {% extends "_base.html" %}
-
+{% load django_vite %}
 
 {% block content %}
     <div class="task-header">
@@ -14,6 +14,19 @@
     </div>
 
     <div class="task-body">
-        <div id="editor" style="height: 100%; border: 1px solid #ccc;"></div>
+        <textarea name="content" id="content" hidden>{{ submission.content }}</textarea>
+        <div id="editor" style="height: 100%; flex:70%; border: 1px solid #ccc;"></div>
+        <div class="task-status">
+            <p id="autosave-status"></p>
+        </div>
+        <div class="task-submit">
+            <button type="submit">Submit</button>
+        </div>
     </div>
+    {{ autosave_url|json_script:"autosave-url-data" }}
+    {{ csrf_token|json_script:"csrf-token-data" }}
+
+    {% vite_asset 'static/js/editor.js' %}
 {% endblock %}
+
+
