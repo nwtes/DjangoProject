@@ -1,24 +1,74 @@
 {% extends '_base.html' %}
 
 {% block content %}
-    <h2>home page</h2>
-    <h3>Visit your dashboard:</h3>
-    {% if user.profile.role == 'teacher' %}
-        <a href="{% url 'teacher_dashboard' %}">Dashboard</a>
-    {% elif user.profile.role == 'student'  %}
-        <a href="{% url 'student_dashboard' %}">Dashboard</a>
-    {% else  %}
-        <p> You are not teacher or student </p>
-    {% endif %}
-    {% if user.is_authenticated %}
-        <p>You are logged in as {{ user.email }} and your role is {{ user.profile.role }}</p>
-        <form action="{% url 'logout' %}" method="post">
-            {% csrf_token %}
-            <button type="submit">Logout</button>
-        </form>
+<div class="home-hero">
+    <div class="hero-content">
+        <h1>Welcome{% if user.is_authenticated %}, {{ user.first_name|default:user.username }}{% endif %}.</h1>
+        <p class="lead">A simple classroom workspace — quick links, tasks, and recent activity all in one place.</p>
+        <div class="hero-actions">
+            {% if user.is_authenticated %}
+                {% if user.profile.role == 'teacher' %}
+                    <a class="btn btn-primary" href="{% url 'teacher_dashboard' %}">Go to teacher dashboard</a>
+                    <a class="btn" href="{% url 'create_task' %}">Create a task</a>
+                {% elif user.profile.role == 'student' %}
+                    <a class="btn btn-primary" href="{% url 'student_dashboard' %}">Go to student dashboard</a>
+                    <a class="btn" href="{% url 'tasks_list' %}">View tasks</a>
+                {% else %}
+                    <a class="btn btn-primary" href="{% url 'login' %}">Sign in</a>
+                {% endif %}
+            {% else %}
+                <a class="btn btn-primary" href="{% url 'register' %}">Sign up</a>
+                <a class="btn" href="{% url 'login' %}">Log in</a>
+            {% endif %}
+        </div>
+    </div>
+    <div class="hero-illustration">
+        <!-- Decorative illustration / placeholder -->
+        <div class="card small">
+            <div class="kpi">Teacher</div>
+            <div class="kpi-value">Create tasks & grade submissions</div>
+        </div>
+    </div>
+</div>
+
+<div class="cards-grid">
+    {% if user.is_authenticated and user.profile.role == 'teacher' %}
+        <div class="card">
+            <h3>Quick actions</h3>
+            <ul>
+                <li><a href="{% url 'create_task' %}">Create new task</a></li>
+                <li><a href="{% url 'teacher_dashboard' %}">View ungraded submissions</a></li>
+                <li><a href="#">Manage classes</a></li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h3>Recent activity</h3>
+            <p class="small">No recent activity available. Visit your dashboard for details.</p>
+        </div>
+    {% elif user.is_authenticated and user.profile.role == 'student' %}
+        <div class="card">
+            <h3>Upcoming tasks</h3>
+            <p class="small">Open your tasks dashboard to see deadlines and submissions.</p>
+            <a class="btn btn-ghost" href="{% url 'student_dashboard' %}">View tasks</a>
+        </div>
+
+        <div class="card">
+            <h3>Profile</h3>
+            <p class="small">Role: {{ user.profile.role }}</p>
+            <a class="btn" href="#">Edit profile</a>
+        </div>
     {% else %}
-        <p>You are not logged in</p>
-        <a href="{% url 'register' %}">Sign up</a>
-        <a href="{% url 'login' %}">Log in</a>
+        <div class="card">
+            <h3>Why use this app?</h3>
+            <p class="small">For teachers: create tasks, manage groups, and grade submissions efficiently. For students: view tasks and submit work.</p>
+        </div>
+        <div class="card">
+            <h3>Get started</h3>
+            <p class="small">Sign up and choose your role to begin.</p>
+            <a class="btn btn-primary" href="{% url 'register' %}">Create an account</a>
+        </div>
     {% endif %}
+</div>
+
 {% endblock %}

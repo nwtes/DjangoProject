@@ -13,21 +13,59 @@
     <title>Document</title>
 </head>
 <body>
-    <header class="fixed-header">
-        <a href="#">Home</a>
-        <a href="#">About</a>
-        <a href="#">Services</a>
-        <a href="#">Contact</a>
-    </header>
-    <div class="content">
-        {% block content %}
 
-        {% endblock %}
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <div class="profile">
+                {% if user.is_authenticated %}
+                    <div class="avatar">{{ user.username|slice:":1"|upper }}</div>
+                    <div class="profile-info">
+                        <div class="username">{{ user.username }}</div>
+                        <a class="link" href="#">Manage account</a>
+                    </div>
+                {% else %}
+                    <div class="profile-info">
+                        <a class="link" href="{% url 'login' %}">Sign in</a>
+                    </div>
+                {% endif %}
+            </div>
+
+            <nav class="nav-links">
+                <a class="nav-item" href="#">Dashboard</a>
+                <a class="nav-item" href="#">My groups</a>
+                <a class="nav-item" href="#">My tasks
+                    {% if pending_tasks_count %}
+                        <span class="badge">{{ pending_tasks_count }}</span>
+                    {% endif %}
+                </a>
+                <a class="nav-item" href="#">Subjects
+                    {% if subjects_count %}
+                        <span class="badge">{{ subjects_count }}</span>
+                    {% endif %}
+                </a>
+                <a class="nav-item" href="#">Settings</a>
+                {% block sidebar_extra %}{% endblock %}
+                <form action="{% url 'logout' %}" method="POST">
+                    {% csrf_token %}
+                    <button type="submit" class="nav-item logout">Logout
+                        {% if ungraded_count %}
+                            <span class="badge badge-alert">{{ ungraded_count }}</span>
+                        {% endif %}
+                    </button>
+                </form>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <div class="content">
+                {% block content %}
+
+                {% endblock %}
+            </div>
+        </main>
     </div>
+
     <script src="{% static 'js/task.js' %}"></script>
-
-
-
 
 
 </body>

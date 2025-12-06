@@ -5,7 +5,6 @@ from .forms import GradingForm
 from django.http import JsonResponse
 from django.middleware.csrf import get_token
 import json
-from datetime import datetime
 # Create your views here.
 
 def student_task_view(request,task_id):
@@ -81,6 +80,7 @@ def submit_task(request,task_id):
     )
     task.submitted = True
     task.save()
+    
     if created:
         pass
     return redirect("student_dashboard")
