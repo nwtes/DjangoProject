@@ -20,7 +20,7 @@ body {
     --border: rgba(255,255,255,0.06);
 }
 
-/* Layout */
+
 .dashboard-container{
     display: flex;
     min-height: 100vh;
@@ -94,7 +94,7 @@ body {
     color: #ff8787;
 }
 
-/* Main */
+
 .main-content{
     flex:1;
     padding:28px 36px;
@@ -149,7 +149,6 @@ body {
     color:#dbeafe;
 }
 
-/* Subjects grid */
 .subject-grid{
     display:grid;
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -181,7 +180,7 @@ body {
     margin-top:14px;
 }
 
-/* Inbox / table */
+
 .inbox-container{
     background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
     border-radius:12px;
@@ -228,7 +227,7 @@ body {
     font-weight:700;
 }
 
-/* Home hero and cards */
+
 .home-hero{
     display:flex;
     gap:28px;
@@ -285,12 +284,45 @@ body {
     color: #1a0f0f;
 }
 
+.task-page .task-header{ margin-bottom:14px; }
+.header-title{ display:flex; justify-content:space-between; align-items:center; padding:10px; border-radius:10px; cursor:pointer; background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005)); border:1px solid var(--border); }
+.header-title .title-left h1{ margin:0; font-size:18px; }
+.header-title .meta{ color:var(--muted); font-size:13px; }
+.header-desc{ padding:12px; margin-top:8px; background: rgba(255,255,255,0.01); border-radius:8px; color:var(--muted); }
+
+.task-body{ display:flex; gap:18px; align-items:flex-start; }
+.editor-wrap{ flex:1 1 70%; min-height:420px; background:var(--card); border-radius:10px; border:1px solid rgba(255,255,255,0.03); padding:8px; box-sizing:border-box; }
+.cm-editor{ height:100%; }
+
+.task-side{ width:260px; display:flex; flex-direction:column; gap:12px; }
+.task-status{ background: rgba(255,255,255,0.01); padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.02); }
+.task-submit{ display:flex; }
+.task-actions{ display:flex; gap:8px; }
+
+.cm-editor .cm-scroller{ background: transparent; color: #e6eef8; }
+.cm-editor .cm-content{ font-family: "Fira Code", monospace; font-size:14px; }
+
 @media (max-width:900px){
     .sidebar{ display:none; }
     .main-content{ padding:18px; }
     .home-hero{ flex-direction:column; align-items:flex-start; }
     .hero-illustration{ width:100%; display:block; }
+    .task-body{ flex-direction:column; }
+    .task-side{ width:100%; order:2; }
+    .editor-wrap{ order:1; min-height:300px; }
 }
 
-/* utility */
 .small{ font-size:13px; color:var(--muted); }
+
+
+.sr-only{
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}

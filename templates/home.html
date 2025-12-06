@@ -12,7 +12,7 @@
                     <a class="btn" href="{% url 'create_task' %}">Create a task</a>
                 {% elif user.profile.role == 'student' %}
                     <a class="btn btn-primary" href="{% url 'student_dashboard' %}">Go to student dashboard</a>
-                    <a class="btn" href="{% url 'tasks_list' %}">View tasks</a>
+                    <a class="btn" href="#">View tasks</a>
                 {% else %}
                     <a class="btn btn-primary" href="{% url 'login' %}">Sign in</a>
                 {% endif %}
@@ -23,7 +23,6 @@
         </div>
     </div>
     <div class="hero-illustration">
-        <!-- Decorative illustration / placeholder -->
         <div class="card small">
             <div class="kpi">Teacher</div>
             <div class="kpi-value">Create tasks & grade submissions</div>

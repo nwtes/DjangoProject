@@ -2,31 +2,46 @@
 {% load django_vite %}
 
 {% block content %}
+<div class="task-page">
     <div class="task-header">
-        <div class="header-title" onClick="toggleDesc(this)">
-            <h1>Task : {{ task.title }}</h1>
-            <h2>Teacher : {{ task.created_by }}</h2>
+        <div class="header-title" role="button" tabindex="0" onclick="toggleDesc(this)" aria-expanded="false">
+            <div class="title-left">
+                <h1> {{ task.title }}</h1>
+                <div class="meta">Teacher: {{ task.created_by }} • Group: {{ task.group }}</div>
+            </div>
             <span class="arrow">▼</span>
         </div>
-        <div class="header-desc">
+        <div class="header-desc" hidden>
             <p>{{ task.description }}</p>
         </div>
     </div>
 
     <div class="task-body">
-        <textarea name="content" id="content" hidden>{{ submission.content }}</textarea>
-        <div id="editor" style="height: 100%; flex:70%; border: 1px solid #ccc;"></div>
-        <div class="task-status">
-            <p id="autosave-status"></p>
+        <div class="editor-wrap">
+            <label for="content" class="sr-only">Task editor content</label>
+            <textarea name="content" id="content" hidden>{{ submission.content }}</textarea>
+            <div id="editor" class="cm-editor" aria-label="Task editor"></div>
         </div>
-        <div class="task-submit">
-            <a href="{% url 'submit' task.id %}">Submit Task</a>
-        </div>
+
+        <aside class="task-side">
+            <div class="task-status">
+                <div id="autosave-status">Saved</div>
+                <div class="small">Auto-save is enabled</div>
+            </div>
+
+            <div class="task-submit">
+                <a class="btn btn-primary" href="{% url 'submit' task.id %}">Submit Task</a>
+            </div>
+
+            <div class="task-actions">
+                <a class="btn btn-ghost" href="{% url 'student_dashboard' %}">Back to dashboard</a>
+            </div>
+        </aside>
     </div>
+
     {{ autosave_url|json_script:"autosave-url-data" }}
     {{ csrf_token|json_script:"csrf-token-data" }}
 
     {% vite_asset 'static/js/editor.js' %}
+</div>
 {% endblock %}
-
-

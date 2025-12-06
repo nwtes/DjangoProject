@@ -5,20 +5,17 @@ import { foldGutter, indentOnInput, indentUnit, bracketMatching, foldKeymap, syn
 import { closeBrackets, autocompletion, closeBracketsKeymap, completionKeymap } from '@codemirror/autocomplete';
 import { lineNumbers, highlightActiveLineGutter, highlightSpecialChars, drawSelection, dropCursor, rectangularSelection, crosshairCursor, highlightActiveLine, keymap, EditorView ,ViewPlugin} from '@codemirror/view';
 
-// Theme
+
 import { oneDark } from "@codemirror/theme-one-dark";
 
-// Language
+
 import { javascript } from "@codemirror/lang-javascript";
 
 export function initEditor({ csrfToken, autosaveUrl }) {
     const textarea = document.getElementById("content");
     const status = document.getElementById("autosave-status");
 
-    // The editor variable is no longer needed in the outer scope for the plugin
-    // let editor;
 
-    // The triggerAutosave function needs to be defined *before* the plugin that uses it.
     let autoSaveTimer = null;
 
     function triggerAutosave(text) {
@@ -45,17 +42,15 @@ export function initEditor({ csrfToken, autosaveUrl }) {
     }
 
     const autosavePlugin = ViewPlugin.fromClass(class {
-        // Use the view from the update object
         update(update) {
             if (update.docChanged) {
-                // Get the current document content from the update.view
                 textarea.value = update.view.state.doc.toString();
                 triggerAutosave(textarea.value);
             }
         }
     });
 
-    const editor = new EditorView({ // Use `const` as it's assigned here once
+    const editor = new EditorView({
         state: EditorState.create({
             doc: textarea.value,
             extensions: [
