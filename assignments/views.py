@@ -1,7 +1,10 @@
 from django.contrib.auth.decorators import login_required
+from django.db.models import OuterRef, Exists, Subquery
 from django.shortcuts import render, get_object_or_404 , redirect,reverse
 from .models import Task,Submission,FinalSubmission
 from .forms import GradingForm
+from classrooms.models import ClassGroup
+from accounts.models import Profile
 from django.http import JsonResponse
 from django.middleware.csrf import get_token
 import json
@@ -84,3 +87,58 @@ def submit_task(request,task_id):
     if created:
         pass
     return redirect("student_dashboard")
+
+def student_tasks_view(request):
+    student = request.user.profile
+    print("GET:", request.GET)
+    #submissions = Submission.objects.filter(task=OuterRef('pk'),student=student)
+    submissions = FinalSubmission.objects.filter(submission__task = OuterRef('pk'),submission__student = student)
+    grade_subquery = Submission.objects.filter(
+        task=OuterRef('pk'),
+        student=student
+    ).values('grade')[:1]
+    graded_submissions = Submission.objects.filter(
+        task=OuterRef("pk"),
+        student=student,
+        grade__isnull=False
+    )
+    tasks = (
+        Task.objects
+        .filter(group__groupmembership__student=student)
+        .annotate(
+            submission_exists=Exists(submissions),
+            graded=Exists(graded_submissions),
+            points = Subquery(grade_subquery)
+        )
+    )
+    groups = ClassGroup.objects.filter(groupmembership__student = student)
+    teachers = Profile.objects.filter(
+        role='teacher',
+        subjects__classgroup__groupmembership__student=student
+    ).distinct()
+
+    # ---Filters from get form
+    group_id = request.GET.get("group")
+    teacher_id = request.GET.get("teacher")
+    graded = request.GET.get("graded")
+    submitted = request.GET.get("submitted")
+    if group_id:
+        tasks = tasks.filter(group__id = group_id)
+    if teacher_id:
+        tasks = tasks.filter(group__subject__teacher__id = teacher_id)
+    if graded == "graded":
+        tasks = tasks.filter(submission__grade__isnull = False)
+    elif graded == "ungraded":
+        tasks = tasks.filter(submission__grade__isnull = True)
+    if submitted == "submitted":
+        tasks = tasks.filter(submission__submitted=True)
+    elif submitted == "unsubmitted":
+        tasks = tasks.filter(submission__submitted=False)
+
+    context = {
+        'tasks': tasks,
+        'groups': groups,
+        'teachers': teachers
+    }
+
+    return render(request,'students/student_tasks.html',context)

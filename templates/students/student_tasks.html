@@ -1,0 +1,119 @@
+{% extends '_base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Tasks</h1>
+    <div class="header-actions">
+        <a href="#" class="btn btn-ghost">New task</a>
+    </div>
+</div>
+
+<!-- Filters bar (full width) -->
+<form method="get" class="card" style="width:100%; display:flex; gap:12px; align-items:center; padding:12px; box-sizing:border-box;">
+    {% csrf_token %}
+    <label class="small">Group
+        <select name="group" class="btn" style="padding:8px 10px; min-width:160px;">
+            <option value="">All groups</option>
+            {% for g in groups %}
+                <option value="{{ g.id }}" {% if request.GET.group|stringformat:"s" == g.id|stringformat:"s" %}selected{% endif %}>{{ g.name }}</option>
+            {% endfor %}
+        </select>
+    </label>
+
+    <label class="small">Teacher
+        <select name="teacher" class="btn" style="padding:8px 10px; min-width:200px;">
+            <option value="">All teachers</option>
+            {% for t in teachers %}
+                <option value="{{ t.id }}" {% if request.GET.teacher|stringformat:"s" == t.id|stringformat:"s" %}selected{% endif %}>{{ t }}</option>
+            {% endfor %}
+        </select>
+    </label>
+
+    <label class="small">Grading
+        <select name="graded" class="btn" style="padding:8px 10px; min-width:160px;">
+            <option value="">All</option>
+            <option value="graded" {% if request.GET.graded == 'graded' %}selected{% endif %}>Graded</option>
+            <option value="ungraded" {% if request.GET.graded == 'ungraded' %}selected{% endif %}>Ungraded</option>
+        </select>
+    </label>
+
+    <label class="small">Submission
+        <select name="submitted" class="btn" style="padding:8px 10px; min-width:160px;">
+            <option value="">All</option>
+            <option value="submitted" {% if request.GET.submitted == 'submitted' %}selected{% endif %}>Submitted</option>
+            <option value="unsubmitted" {% if request.GET.submitted == 'unsubmitted' %}selected{% endif %}>Unsubmitted</option>
+        </select>
+    </label>
+
+    <div style="margin-left:auto; display:flex; gap:8px;">
+        <button type="submit" class="btn btn-primary">Apply</button>
+        <a href="?" class="btn">Reset</a>
+    </div>
+</form>
+
+<!-- Tasks table -->
+<div class="inbox-container" style="margin-top:16px;">
+    <table class="inbox-table" aria-describedby="tasks-list">
+        <thead>
+            <tr>
+                <th style="width:36%;">Task</th>
+                <th style="width:16%;">Group / Subject</th>
+                <th style="width:14%;">Teacher</th>
+                <th style="width:12%;">Due</th>
+                <th style="width:10%;">Grading</th>
+                <th style="width:12%;">Submission</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if tasks %}
+                {% for task in tasks %}
+                    <tr class="{% if not task.graded %}ungraded{% endif %}" data-task-id="{{ task.id }}">
+                        <td>
+                            <details class="header-title">
+                                <summary class="summary-row" style="list-style:none; outline:none; display:flex; justify-content:space-between; align-items:center; gap:12px;">
+                                    <span>
+                                        <span style="font-weight:700; display:block;">{{ task.title }}</span>
+                                        <span class="small" style="display:block;">Assigned: {{ task.created_by }} • {{ task.created_at|date:"M d, Y" }}</span>
+                                    </span>
+                                    {% if task.graded %}
+                                        <span class="meta small">{{ task.points }} pts</span>
+                                    {% endif %}
+                                </summary>
+                                <div class="header-desc">
+                                    <div class="small">{{ task.description|linebreaksbr }}</div>
+                                </div>
+                            </details>
+                        </td>
+                        <td>
+                            <div class="small">{{ task.group.name }}</div>
+                            <div class="small">{{ task.subject }}</div>
+                        </td>
+                        <td class="small">{{ task.created_by}}</td>
+                        <td class="small">{% if task.due_date %}{{ task.due_date|date:"M d, Y H:i" }}{% else %}&mdash;{% endif %}</td>
+                        <td class="small">{% if task.graded %}<span style="color:var(--accent); font-weight:700;">Graded</span>{% else %}<span style="color:var(--muted);">Ungraded</span>{% endif %}</td>
+                        <td>
+                            <div class="small">{% if task.submission_exists %}<span style="color:var(--accent-2); font-weight:700;">Submitted</span>{% else %}<span style="color:var(--muted);">Not submitted</span>{% endif %}</div>
+                            <div style="margin-top:8px; display:flex; gap:8px;">
+                                <a href="{% url 'task' task.id %}" class="btn">Open</a>
+                                {% if task.submission_exists %}
+                                    <a href="#" class="btn btn-accent">View</a>
+                                {% else %}
+                                    <a href="{% url 'submit' task.id %}" class="btn btn-primary">Submit</a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="6" style="padding:22px; text-align:center; color:var(--muted);">
+                        No tasks found. Check filters or contact your teacher.
+                    </td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

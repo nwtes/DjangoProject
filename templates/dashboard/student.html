@@ -1,8 +1,7 @@
 {% extends '_base.html' %}
 
 {% block sidebar_extra %}
-    <a class="nav-item" href="">Student: My enrollments</a>
-    <a class="nav-item" href="">Student: Progress</a>
+    <a class="nav-item" href="">Progress</a>
 {% endblock %}
 
 {% block content %}
@@ -12,7 +11,7 @@
             <div class="small">Welcome back, {{ user.first_name|default:user.username }}</div>
         </div>
         <div class="header-actions">
-            <a class="btn btn-primary" href="{% url 'student_dashboard' %}">My tasks</a>
+            <a class="btn btn-primary" href="{% url 'student_tasks' %}">My tasks</a>
             <a class="btn btn-ghost" href="#">Edit profile</a>
         </div>
     </header>
@@ -59,7 +58,7 @@
                                 <td>{{ t.group }}</td>
                                 <td>{{ t.created_by }}</td>
                                 <td class="small">{{ t.due_date|default:"—" }}</td>
-                                <td><a class="grade-link" href="{% url 'task' t.id %}">Open →</a></td>
+                                <td><a class="grade-link" href="{% url 'task' t.id %}">To task →</a></td>
                             </tr>
                         {% endfor %}
                     {% else %}
@@ -71,6 +70,42 @@
             </table>
             <div class="inbox-footer">
                 <a href="{% url 'student_dashboard' %}" class="view-all">View All Tasks</a>
+            </div>
+        </div>
+    </section>
+    <section class="submissions-section" style="margin-top:14px;">
+        <h2 class="section-title">Recent graded tasks</h2>
+        <div class="inbox-container">
+            <table class="inbox-table">
+                <thead>
+                    <tr>
+                        <th>Task</th>
+                        <th>Group</th>
+                        <th>Teacher</th>
+                        <th>Grade</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if tasks %}
+                        {% for t in tasks %}
+                            <tr>
+                                <td>{{ t.title }}</td>
+                                <td>{{ t.group }}</td>
+                                <td>{{ t.created_by }}</td>
+                                <td class="small">{{ t.due_date|default:"—" }}</td>
+                                <td><a class="grade-link" href="{% url 'task' t.id %}">View results →</a></td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="5">No assigned tasks. Check back later.</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+            <div class="inbox-footer">
+                <a href="{% url 'student_dashboard' %}" class="view-all">View All Graded Tasks</a>
             </div>
         </div>
     </section>
