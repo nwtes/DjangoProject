@@ -1,0 +1,144 @@
+{% extends '_base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="page-header">
+    <h1>{{ group.name }}</h1>
+    <div class="header-actions">
+
+    </div>
+</div>
+
+<div class="card" style="display:flex; gap:18px; align-items:center;">
+    <div style="flex:1; display:flex; gap:16px; align-items:center;">
+        <div class="avatar" style="width:72px; height:72px; border-radius:14px; font-size:22px;">{{ group.name|slice:":1"|upper }}</div>
+        <div>
+            <h2 style="margin:0 0 6px 0;">{{ group.subject }}</h2>
+            <div class="small">Teacher: {{ group.teacher}}</div>
+            <div class="small">Students: {{ students|length }}</div>
+        </div>
+    </div>
+
+
+</div>
+
+<div class="card" style="margin-top:16px;">
+    <div style="display:flex; gap:8px; align-items:center; margin-bottom:12px;">
+        <div id="split-controls" role="tablist" aria-label="Group view tabs" style="display:flex; gap:8px;">
+            <button class="btn" role="tab" aria-selected="true" data-target="announcements" id="tab-announcements">Announcements</button>
+            <button class="btn" role="tab" aria-selected="false" data-target="students" id="tab-students">Students</button>
+        </div>
+        <div style="margin-left:auto; display:flex; gap:8px;">
+        </div>
+    </div>
+
+    <div id="group-panels">
+
+        <section id="panel-announcements" role="tabpanel" aria-labelledby="tab-announcements">
+            {% if announcements %}
+                <div style="display:flex; flex-direction:column; gap:12px;">
+                    {% for a in announcements %}
+                        <article class="card" style="padding:12px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+                                <div>
+                                    <div style="font-weight:700;">{{ a.title }}</div>
+                                    <div class="small">By {{ a.author.get_full_name|default:a.author.username }} • {{ a.created_at|date:"M d, Y H:i" }}</div>
+                                </div>
+                                <div class="small">{{ a.pinned|yesno:"Pinned," }}</div>
+                            </div>
+
+                            <div style="margin-top:10px;">
+                                <details>
+                                    <summary class="small" style="cursor:pointer;">Show content</summary>
+                                    <div class="header-desc" style="margin-top:8px;">{{ a.body|linebreaksbr }}</div>
+                                </details>
+                            </div>
+
+                            <div style="margin-top:10px; display:flex; gap:8px;">
+                                <a href="{% url 'students:announcement_edit' group.id a.id %}" class="btn">Edit</a>
+                                <a href="{% url 'students:announcement_delete' group.id a.id %}" class="btn btn-ghost">Delete</a>
+                            </div>
+                        </article>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="card" style="padding:18px; text-align:center; color:var(--muted);">No announcements yet.</div>
+            {% endif %}
+        </section>
+
+
+        <section id="panel-students" role="tabpanel" aria-labelledby="tab-students" hidden>
+            {% if students %}
+                <div style="overflow:auto;">
+                    <table class="inbox-table" style="min-width:700px;">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Grade</th>
+                                <th>Last activity</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for s in students %}
+                                <tr>
+                                    <td>
+                                        <a href="#" class="nav-item" style="padding:0; border-radius:0;">{{ s }}</a>
+
+                                    </td>
+                                    <td class="small">{{ s.email }}</td>
+                                    <td class="small">{% if s.grade %}{{ s.grade }}{% else %}&mdash;{% endif %}</td>
+                                    <td class="small">{% if s.last_login %}{{ s.last_login|date:"M d, Y" }}{% else %}&mdash;{% endif %}</td>
+                                    <td style="min-width:140px;">
+                                        <a href="#" class="btn">Message</a>
+                                        <a href="#" class="btn btn-ghost">Grade</a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="card" style="padding:18px; text-align:center; color:var(--muted);">No students in this group.</div>
+            {% endif %}
+        </section>
+    </div>
+</div>
+
+<script>
+
+(function(){
+    const controls = document.querySelectorAll('#split-controls [role="tab"]');
+    const panels = {
+        announcements: document.getElementById('panel-announcements'),
+        students: document.getElementById('panel-students')
+    };
+
+    function activate(target){
+        controls.forEach(btn => {
+            const t = btn.getAttribute('data-target');
+            const selected = t === target;
+            btn.setAttribute('aria-selected', selected);
+            if(selected){ btn.classList.add('btn-primary'); } else { btn.classList.remove('btn-primary'); }
+        });
+        Object.keys(panels).forEach(k => {
+            const panel = panels[k];
+            if(k === target){ panel.hidden = false; panel.removeAttribute('aria-hidden'); }
+            else { panel.hidden = true; panel.setAttribute('aria-hidden','true'); }
+        });
+    }
+
+    controls.forEach(btn => {
+        btn.addEventListener('click', function(e){
+            e.preventDefault();
+            activate(btn.getAttribute('data-target'));
+        });
+    });
+
+
+    activate('announcements');
+})();
+</script>
+
+{% endblock %}

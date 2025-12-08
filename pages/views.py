@@ -1,9 +1,11 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from classrooms.models import ClassGroup,Subject,GroupMembership
+from classrooms.models import ClassGroup,Subject,GroupMembership,Announcement
 from assignments.models import Task,Submission
+
 from .forms import TaskCreationForm
 from django.db.models import Count
 from .decorators import role_required
+from accounts.models import Profile
 # Create your views here.
 
 def home_view(request):
@@ -98,3 +100,40 @@ def task_page_delete(request,task_id):
         task.delete()
         return redirect("teacher_dashboard")
     return render(request,'home.html')
+
+def student_group_view(request,group_id):
+    student = request.user.profile
+    group = get_object_or_404(ClassGroup, id=group_id)
+
+    students = Profile.objects.filter(
+        role='student',
+        groups__group=group
+    ).distinct()
+    context = {
+        'group' : group,
+        'students': students
+    }
+    return render(request,'students/student_view_group.html',context)
+def teacher_group_view(request):
+    teacher = request.user.profile
+    group_id = request.GET.get('group_id')
+    if group_id:
+        current_group = get_object_or_404(ClassGroup,id = group_id)
+    else:
+        current_group = get_object_or_404(ClassGroup,id = 1)
+        if not current_group:
+            pass
+    groups = ClassGroup.objects.filter(subject__teacher = teacher)
+    posts = Announcement.objects.filter(group = current_group)
+    students = Profile.objects.filter(
+        role='student',
+        groups__group = current_group
+    ).distinct()
+    context = {
+        'current_group': current_group,
+        'groups' : groups,
+        'students': students,
+        'announcements' : posts
+    }
+    return render(request,'teacher/teacher_view_group.html',context)
+

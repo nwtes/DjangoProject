@@ -24,7 +24,7 @@
                     <p class="small">Subject: {{ g.subject.name }} • Teacher: {{ g.subject.teacher }}</p>
                     <p class="small">Joined: {{ g.joined_at|default:"—" }}</p>
                     <div style="margin-top:10px; display:flex; gap:8px;">
-                        <a class="btn btn-ghost" href="">View subject</a>
+                        <a class="btn btn-ghost" href="{% url 'groups' g.id %}">View group</a>
                         <a class="btn" href="#">View tasks</a>
                     </div>
                 </div>

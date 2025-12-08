@@ -28,3 +28,17 @@ class GroupMembership(models.Model):
 
     class Meta:
         unique_together = ('student','group')
+
+class Announcement(models.Model):
+    created_by = models.ForeignKey(
+        Profile,
+        on_delete=models.CASCADE,
+        limit_choices_to={"role": "teacher"},
+        related_name="announcement"
+    )
+    group = models.ForeignKey(ClassGroup,on_delete = models.CASCADE,blank = True,null = True)
+    title = models.CharField(max_length= 64)
+    body = models.TextField()
+    created_at = models.DateTimeField(auto_now_add = True)
+    def __str__(self):
+        return f"{self.title}"
