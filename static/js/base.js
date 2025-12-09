@@ -135,21 +135,39 @@ export function initEditor({ csrfToken, autosaveUrl,userRole }) {
         }
 
         if (userRole === "teacher") {
-            STUDENT_CACHE[data.student_id] = data.content;
 
-            if (data.type === "broadcast_change" && data.student_id === CURRENT_STUDENT_ID) {
-                applyRemoteContent(data.content);
+            if (data.type === "broadcast_change") {
+                window.STUDENT_CACHE[data.student_id] = data.content;
+                if (data.student_id === CURRENT_STUDENT_ID) {
+                    applyRemoteContent(data.content);
+                }
             }
 
-            if(data.type === "student_list"){
-                const ul = document.getElementById("student-list")
-                ul.innerHTML = ""
+
+            if (data.type === "student_list") {
+                const ul = document.getElementById("student-list");
+                ul.innerHTML = "";
 
                 data.students.forEach(student => {
-                    const li = document.createElement("li")
-                    li.textContent = student.username
-                    ul.appendChild(li)
-                })
+                    window.STUDENT_CACHE[student.id] = student.content || "";
+
+                    const li = document.createElement("li");
+                    li.textContent = student.username + " id: " + student.id;
+
+                    li.addEventListener("click", () => {
+                        window.CURRENT_STUDENT_ID = student.id;
+                        console.log("Teacher is now viewing student:", student.username, CURRENT_STUDENT_ID);
+
+                        const cached = window.STUDENT_CACHE[student.id];
+                        if (cached !== undefined) {
+                            editor.dispatch({
+                                changes: { from: 0, to: editor.state.doc.length, insert: cached }
+                            });
+                        }
+                    });
+
+                    ul.appendChild(li);
+                });
             }
         }
     };
