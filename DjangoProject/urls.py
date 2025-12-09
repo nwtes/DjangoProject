@@ -22,6 +22,7 @@ urlpatterns = [
     path("accounts/",include("accounts.urls")),
     path("",include("pages.urls")),
     path("tasks/",include("assignments.urls")),
-    path("announcements/",include("classrooms.urls"))
+    path("announcements/",include("classrooms.urls")),
+    #path("editor/",include("editor.urls"))
 
 ]

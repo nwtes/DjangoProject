@@ -39,12 +39,15 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    'daphne',
     'django.contrib.staticfiles',
     'accounts',
     'pages',
     'classrooms',
     'assignments',
-    'django_vite'
+    'django_vite',
+    'editor'
+
 ]
 
 MIDDLEWARE = [
@@ -140,3 +143,4 @@ STATICFILES_DIRS = [
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+ASGI_APPLICATION = 'DjangoProject.asgi.application'

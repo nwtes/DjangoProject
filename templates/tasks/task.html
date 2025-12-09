@@ -41,7 +41,11 @@
 
     {{ autosave_url|json_script:"autosave-url-data" }}
     {{ csrf_token|json_script:"csrf-token-data" }}
-
+    <script>
+        window.isLive = {{ is_live|yesno:"true,false" }}
+        window.docID = {{ document.id }}
+        window.WS_URL = `ws://${window.location.host}/ws/editor/room/{{ task.id }}/`;
+    </script>
     {% vite_asset 'static/js/editor.js' %}
 </div>
 {% endblock %}

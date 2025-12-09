@@ -7,36 +7,35 @@ from classrooms.models import ClassGroup
 from accounts.models import Profile
 from django.http import JsonResponse
 from django.middleware.csrf import get_token
+from editor.models import TaskDocument
 import json
 # Create your views here.
 
-def student_task_view(request,task_id):
+def student_task_view(request, task_id):
     student = request.user.profile
-    task = get_object_or_404(Task,id = task_id)
-    autosave_url  = reverse("autosave", args=(task_id,))
+    task = get_object_or_404(Task, id=task_id)
+    autosave_url = reverse("autosave", args=(task_id,))
     csrf_token = get_token(request)
-    submission, created = Submission.objects.get_or_create(
+    document, _ = TaskDocument.objects.get_or_create(
+        task=task,
+        student=student
+    )
+    submission, _ = Submission.objects.get_or_create(
         task=task,
         student=student,
-        defaults={"content": ""}  # empty initial content
     )
+
     context = {
-        'initial_content': 'loading',
-        'autosave_url' : autosave_url,
+        'initial_content': document.content,
+        'autosave_url': autosave_url,
+        'csrf_token': csrf_token,
         'task': task,
-        'csrf_token':csrf_token,
-        'submission': submission
+        'submission': submission,
+        'document': document,
+        'is_live': task.is_live
     }
 
-    if request.method == "POST":
-        message = request.POST.get("message")
-        Submission.objects.create(
-            task = task,
-            student=student,
-            content = message
-        )
-        return redirect("student_dashboard")
-    return render(request,"tasks/task.html" , context)
+    return render(request, "tasks/task.html", context)
 
 def submission_task_view(request,submission_id):
     submission = get_object_or_404(Submission,id = submission_id)
@@ -62,14 +61,28 @@ def autosave_task(request, task_id):
     if request.method == "POST":
         data = json.loads(request.body)
         content = data.get("content", "")
-        task = Task.objects.get(id=task_id)
-        submission , created = Submission.objects.get_or_create(
-            task = task,student = request.user.profile
+
+        task = get_object_or_404(Task, id=task_id)
+        student = request.user.profile
+
+        document, _ = TaskDocument.objects.get_or_create(
+            task=task,
+            student=student
+        )
+        document.content = content
+        document.save()
+
+        submission, _ = Submission.objects.get_or_create(
+            task=task,
+            student=student
         )
         submission.content = content
         submission.save()
-        return JsonResponse({"saved_at": "Saved!"})
+
+        return JsonResponse({"saved": True})
+
     return JsonResponse({"error": "Invalid request"}, status=400)
+
 
 
 def submit_task(request,task_id):

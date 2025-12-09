@@ -14,6 +14,7 @@ class Task(models.Model):
         related_name = "tasks"
     )
     group = models.ForeignKey(ClassGroup,on_delete = models.CASCADE,related_name="task")
+    is_live = models.BooleanField(default = False)
 
     def clean(self):
 

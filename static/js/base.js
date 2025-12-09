@@ -10,7 +10,7 @@ import { oneDark } from "@codemirror/theme-one-dark";
 
 
 import { javascript } from "@codemirror/lang-javascript";
-
+let socket = null;
 export function initEditor({ csrfToken, autosaveUrl }) {
     const textarea = document.getElementById("content");
     const status = document.getElementById("autosave-status");
@@ -85,6 +85,29 @@ export function initEditor({ csrfToken, autosaveUrl }) {
         }),
         parent: document.getElementById("editor")
     });
+    if (isLive) {
+        console.log("Task is live — attempting websocket connection...");
 
+        socket = new WebSocket(window.WS_URL);
+
+
+        socket.onopen = () => {
+            console.log("%c[WS] Connected successfully!", "color: #00c853; font-weight: bold;");
+        };
+
+        socket.onmessage = (event) => {
+            console.log("%c[WS] Message received:", "color: #2962ff; font-weight: bold;", event.data);
+        };
+
+        socket.onerror = (err) => {
+            console.log("%c[WS] Error:", "color: #d50000; font-weight: bold;", err);
+        };
+
+        socket.onclose = () => {
+            console.log("%c[WS] Connection closed.", "color: #ffab00; font-weight: bold;");
+        };
+    } else {
+        console.log("Task is NOT live — websockets disabled.");
+    }
     return editor;
 }
