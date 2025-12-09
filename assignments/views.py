@@ -32,7 +32,9 @@ def student_task_view(request, task_id):
         'task': task,
         'submission': submission,
         'document': document,
-        'is_live': task.is_live
+        'is_live': task.is_live,
+        'user_role': student.role,
+        'user_id': request.user.id
     }
 
     return render(request, "tasks/task.html", context)

@@ -11,7 +11,7 @@ import { oneDark } from "@codemirror/theme-one-dark";
 
 import { javascript } from "@codemirror/lang-javascript";
 let socket = null;
-export function initEditor({ csrfToken, autosaveUrl }) {
+export function initEditor({ csrfToken, autosaveUrl,userRole }) {
     const textarea = document.getElementById("content");
     const status = document.getElementById("autosave-status");
 
@@ -40,7 +40,16 @@ export function initEditor({ csrfToken, autosaveUrl }) {
             });
         }, 800);
     }
+    const liveUpdatePlugin = EditorView.updateListener.of((update) => {
+        if (update.docChanged) {
+            const text = update.state.doc.toString();
 
+            socket.send(JSON.stringify({
+                student_id: CURRENT_STUDENT_ID,
+                content: text,
+            }));
+        }
+    });
     const autosavePlugin = ViewPlugin.fromClass(class {
         update(update) {
             if (update.docChanged) {
@@ -81,33 +90,75 @@ export function initEditor({ csrfToken, autosaveUrl }) {
                 ]),
                 javascript(),
                 syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
+                isLive ? liveUpdatePlugin : [],
             ]
         }),
         parent: document.getElementById("editor")
     });
     if (isLive) {
-        console.log("Task is live — attempting websocket connection...");
+    console.log("Task is live — attempting websocket connection...");
 
-        socket = new WebSocket(window.WS_URL);
+    socket = new WebSocket(window.WS_URL);
 
+    socket.onopen = () => {
+        console.log("%c[WS] Connected successfully!", "color: #00c853; font-weight: bold;");
+    };
 
-        socket.onopen = () => {
-            console.log("%c[WS] Connected successfully!", "color: #00c853; font-weight: bold;");
-        };
+    socket.onerror = (err) => {
+        console.log("%c[WS] Error:", "color: #d50000; font-weight: bold;", err);
+    };
 
-        socket.onmessage = (event) => {
-            console.log("%c[WS] Message received:", "color: #2962ff; font-weight: bold;", event.data);
-        };
+    socket.onclose = () => {
+        console.log("%c[WS] Connection closed.", "color: #ffab00; font-weight: bold;");
+    };
 
-        socket.onerror = (err) => {
-            console.log("%c[WS] Error:", "color: #d50000; font-weight: bold;", err);
-        };
+    function applyRemoteContent(newText) {
+        const current = editor.state.doc.toString();
 
-        socket.onclose = () => {
-            console.log("%c[WS] Connection closed.", "color: #ffab00; font-weight: bold;");
-        };
-    } else {
-        console.log("Task is NOT live — websockets disabled.");
+        if (newText === current) return;
+
+        editor.dispatch({
+            changes: {
+                from: 0,
+                to: current.length,
+                insert: newText
+            }
+        });
     }
+
+    socket.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+
+        if (userRole === "student") {
+            if (data.student_id !== CURRENT_STUDENT_ID) return;
+            applyRemoteContent(data.content);
+        }
+
+        if (userRole === "teacher") {
+            STUDENT_CACHE[data.student_id] = data.content;
+
+            if (data.type === "broadcast_change" && data.student_id === CURRENT_STUDENT_ID) {
+                applyRemoteContent(data.content);
+            }
+
+            if(data.type === "student_list"){
+                const ul = document.getElementById("student-list")
+                ul.innerHTML = ""
+
+                data.students.forEach(student => {
+                    const li = document.createElement("li")
+                    li.textContent = student.username
+                    ul.appendChild(li)
+                })
+            }
+        }
+    };
+
+
+
+}
+else {
+    console.log("Task is NOT live — websockets disabled.");
+}
     return editor;
 }

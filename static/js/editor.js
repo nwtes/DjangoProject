@@ -11,12 +11,14 @@ function getDjangoData(id){
 
 const autosaveUrl = getDjangoData('autosave-url-data')
 const csrfToken = getDjangoData("csrf-token-data")
+const userRole = getDjangoData("user-role")
 
 if (autosaveUrl && csrfToken){
     initEditor(
         {
             autosaveUrl: autosaveUrl,
-            csrfToken: csrfToken
+            csrfToken: csrfToken,
+            userRole: userRole
         }
     )
 }else{
