@@ -28,7 +28,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = [".herokuapp.com"]
+ALLOWED_HOSTS = [".herokuapp.com", 'localhost', '127.0.0.1']
 
 CSRF_TRUSTED_ORIGINS = [
     "https://nwte-capstone-ba87c892eb74.herokuapp.com",
@@ -56,13 +56,13 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    "whitenoise.middleware.WhiteNoiseMiddleware"
 ]
 
 ROOT_URLCONF = 'DjangoProject.urls'
@@ -138,14 +138,31 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-DJANGO_VITE_ASSETS_PATH = os.path.join(BASE_DIR, 'static_build', 'assets')
-
+# django-vite: point to the directory that contains the generated manifest.json
+# Vite places manifest.json in the `outDir` (here: static_build), and assets go into
+# static_build/assets by default. So point to `static_build`, not `static_build/assets`.
+DJANGO_VITE_ASSETS_PATH = os.path.join(BASE_DIR, 'static_build', '.vite')
+# When DEBUG is True we want the default staticfiles storage so Django serves files
+# from STATICFILES_DIRS without requiring collectstatic; in production use WhiteNoise
+# compressed manifest storage for caching and hashed filenames.
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
     BASE_DIR / 'static_build',
 ]
+
+# Vite dev mode toggle used by django-vite (serve from vite dev server when DEBUG)
+DJANGO_VITE_DEV_MODE = DEBUG
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
+
+if DEBUG:
+    # In development serve files directly from STATICFILES_DIRS
+    STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
+else:
+    # In production use WhiteNoise compressed manifest storage (works with collectstatic)
+    STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
 
 REDIS_URL = os.environ.get("REDIS_URL")
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
