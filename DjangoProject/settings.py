@@ -141,34 +141,24 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-# django-vite: point to the directory that contains the generated manifest.json
-# During development (DEBUG True) use the Vite output directory that contains .vite/manifest.json.
-# In production (DEBUG False) point to STATIC_ROOT so the manifest copied by collectstatic
-# is read from `staticfiles/manifest.json`.
 if DEBUG:
     DJANGO_VITE_ASSETS_PATH = os.path.join(BASE_DIR, 'static_build', '.vite')
 else:
     DJANGO_VITE_ASSETS_PATH = os.path.join(STATIC_ROOT)
 
-# When DEBUG is True we want the default staticfiles storage so Django serves files
-# from STATICFILES_DIRS without requiring collectstatic; in production use WhiteNoise
-# compressed manifest storage for caching and hashed filenames.
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
     BASE_DIR / 'static_build',
 ]
 
-# Vite dev mode toggle used by django-vite (serve from vite dev server when DEBUG)
 DJANGO_VITE_DEV_MODE = DEBUG
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 if DEBUG:
-    # In development serve files directly from STATICFILES_DIRS
     STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
 else:
-    # In production use WhiteNoise compressed manifest storage (works with collectstatic)
     STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 
@@ -184,7 +174,6 @@ CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            # pass Redis URL directly as a string in a list
             "hosts": [f"{REDIS_URL}?ssl_cert_reqs=none"],
         },
     },

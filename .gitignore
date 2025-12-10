@@ -1,11 +1,82 @@
-core.Microsoft*
-core.mongo*
-core.python*
-env.py
-__pycache__/
+# Python
 *.py[cod]
-node_modules/
-.github/
-cloudinary_python.txt
+__pycache__/
+*.so
+*.egg-info/
+.eggs/
+
+# Virtual environments
 .venv/
-.staticfiles/
+venv/
+ENV/
+env/
+.env
+.env.*
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+media/
+
+# Static/build artefacts (Vite / Django collectstatic / build outputs)
+node_modules/
+dist/
+.vite/
+static_build/
+staticfiles/
+static/.cache/
+static/assets/
+*.map
+
+# Vite manifest (if you regenerate it in CI) - optional
+# manifest.json
+
+# Node/npm/yarn
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# IDEs / editors
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Testing / coverage
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Type checkers / linters
+.mypy_cache/
+.pyre/
+.pytype/
+
+# Heroku / local runtime
+node_modules/
+# keep Procfile and requirements.txt in repo
+
+# Misc
+*.log
+*.bak
+
+# Don't commit local secret module
+env.py
+
+# Windows specific
+*.lnk
+
+# If you build wheels locally
+dist/
+build/
+
+# End of file
+
