@@ -6,7 +6,7 @@
   "scripts": {
     "build": "vite build",
     "dev": "vite",
-    "heroku-postbuild": "npm install && npm run build"
+    "heroku-postbuild": "npm install && npm run build && node -e \"const fs=require('fs'); if(fs.existsSync('static_build/.vite/manifest.json')) fs.copyFileSync('static_build/.vite/manifest.json','static_build/manifest.json');\""
   },
   "repository": {
     "type": "git",

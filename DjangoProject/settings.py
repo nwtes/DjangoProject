@@ -140,9 +140,14 @@ STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # django-vite: point to the directory that contains the generated manifest.json
-# Vite places manifest.json in the `outDir` (here: static_build), and assets go into
-# static_build/assets by default. So point to `static_build`, not `static_build/assets`.
-DJANGO_VITE_ASSETS_PATH = os.path.join(BASE_DIR, 'static_build', '.vite')
+# During development (DEBUG True) use the Vite output directory that contains .vite/manifest.json.
+# In production (DEBUG False) point to STATIC_ROOT so the manifest copied by collectstatic
+# is read from `staticfiles/manifest.json`.
+if DEBUG:
+    DJANGO_VITE_ASSETS_PATH = os.path.join(BASE_DIR, 'static_build', '.vite')
+else:
+    DJANGO_VITE_ASSETS_PATH = os.path.join(STATIC_ROOT)
+
 # When DEBUG is True we want the default staticfiles storage so Django serves files
 # from STATICFILES_DIRS without requiring collectstatic; in production use WhiteNoise
 # compressed manifest storage for caching and hashed filenames.
