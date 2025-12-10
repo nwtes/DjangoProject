@@ -54,7 +54,7 @@
         window.isLive = {{ is_live|yesno:"true,false" }}
         window.docID = {{ document.id }}
         const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-        window.WS_URL = `${protocol}://${window.location.host}/ws/editor/room/${task_id}/`;
+        window.WS_URL = `${protocol}://${window.location.host}/ws/editor/room/{{task.id}}/`;
         const userRole = JSON.parse(document.getElementById('user-role').textContent)
         const userId = JSON.parse(document.getElementById('user-id').textContent)
         window.CURRENT_STUDENT_ID = null
