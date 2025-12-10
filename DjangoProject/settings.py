@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 import os
+import urllib.parse
+import ssl
 import dj_database_url
 if os.path.isfile('env.py'):
     import env
@@ -169,8 +171,12 @@ else:
     # In production use WhiteNoise compressed manifest storage (works with collectstatic)
     STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
+ssl_context = ssl.create_default_context()
+ssl_context.check_hostname = False
+ssl_context.verify_mode = ssl.CERT_NONE
 
-REDIS_URL = os.environ.get("REDIS_URL")
+
+redis_url = os.environ.get("REDIS_URL")
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 ASGI_APPLICATION = 'DjangoProject.asgi.application'
 CHANNEL_LAYERS = {
@@ -178,9 +184,10 @@ CHANNEL_LAYERS = {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
             "hosts": [{
-                "address": os.environ.get("REDIS_URL", "redis://localhost:6379"),
+                "address": (redis_url.hostname, redis_url.port),
+                "password": redis_url.password,
                 "ssl": True,
-                "ssl_cert_reqs": None,
+                "ssl_context": ssl_context,
             }],
         },
     },
