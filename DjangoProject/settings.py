@@ -176,7 +176,7 @@ ssl_context.check_hostname = False
 ssl_context.verify_mode = ssl.CERT_NONE
 
 
-redis_url = os.environ.get("REDIS_URL")
+redis_url = urllib.parse.urlparse(os.environ['REDIS_URL'])
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 ASGI_APPLICATION = 'DjangoProject.asgi.application'
 CHANNEL_LAYERS = {
