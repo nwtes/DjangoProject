@@ -171,24 +171,21 @@ else:
     # In production use WhiteNoise compressed manifest storage (works with collectstatic)
     STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-ssl_context = ssl.create_default_context()
-ssl_context.check_hostname = False
-ssl_context.verify_mode = ssl.CERT_NONE
+
 
 
 redis_url = urllib.parse.urlparse(os.environ['REDIS_URL'])
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 ASGI_APPLICATION = 'DjangoProject.asgi.application'
+
+REDIS_URL = os.environ.get("REDIS_URL", "redis://127.0.0.1:6379/0")
+
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [{
-                "address": (redis_url.hostname, redis_url.port),
-                "password": redis_url.password,
-                "ssl": True,
-                "ssl_context": ssl_context,
-            }],
+            # pass Redis URL directly as a string in a list
+            "hosts": [f"{REDIS_URL}?ssl_cert_reqs=none"],
         },
     },
 }

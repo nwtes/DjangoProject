@@ -14,7 +14,8 @@ class UpdateConsumer(AsyncWebsocketConsumer):
         self.task_id = self.scope["url_route"]["kwargs"]["task_id"]
         self.group_name = f"task_{self.task_id}"
 
-        self.redis = aioredis.from_url(REDIS_URL, decode_responses=True)
+        self.redis = aioredis.from_url(f"{REDIS_URL}?ssl_cert_reqs=none", decode_responses=True)
+
 
         await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.accept()
