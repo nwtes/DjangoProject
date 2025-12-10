@@ -30,6 +30,10 @@ DEBUG = True
 
 ALLOWED_HOSTS = [".herokuapp.com"]
 
+CSRF_TRUSTED_ORIGINS = [
+    "https://nwte-capstone-ba87c892eb74.herokuapp.com",
+    "https://*.herokuapp.com",
+]
 
 # Application definition
 
