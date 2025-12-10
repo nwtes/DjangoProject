@@ -174,10 +174,14 @@ REDIS_URL = os.environ.get("REDIS_URL")
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 ASGI_APPLICATION = 'DjangoProject.asgi.application'
 CHANNEL_LAYERS = {
-    "default" : {
+    "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [REDIS_URL],
+            "hosts": [{
+                "address": os.environ.get("REDIS_URL", "redis://localhost:6379"),
+                "ssl": True,
+                "ssl_cert_reqs": None,
+            }],
         },
-    }
+    },
 }
