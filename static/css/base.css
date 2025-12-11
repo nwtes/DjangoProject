@@ -20,7 +20,6 @@ body {
     --border: rgba(255,255,255,0.06);
 }
 
-
 .dashboard-container{
     display: flex;
     min-height: 100vh;
@@ -268,7 +267,6 @@ body {
 .card ul{ margin:0; padding-left:18px; }
 .card li{ margin-bottom:8px; }
 
-/* Sidebar badges */
 .badge{
     display:inline-block;
     background: rgba(255,255,255,0.03);
@@ -326,3 +324,51 @@ body {
     white-space: nowrap !important;
     border: 0 !important;
 }
+
+
+.help-btn {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  background: #ef4444;
+  color: #fff;
+  border: none;
+  padding: 10px 14px;
+  border-radius: 999px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+  cursor: pointer;
+  z-index: 1100;
+  font-weight: 600;
+}
+.help-btn:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+.help-toast {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  top: auto;
+  background: rgba(17,24,39,0.96);
+  color: #fff;
+  padding: 12px 14px;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(2,6,23,0.6);
+  z-index: 1200;
+  min-width: 240px;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 240ms ease, transform 240ms ease;
+}
+.help-toast.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+.help-toast .help-toast-content { display:flex; flex-direction:column; }
+.help-toast .help-toast .btn { margin-left: auto; }
+
+.student-item { padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.03); cursor: pointer; }
+.student-item:hover { background: rgba(255,255,255,0.02); }
+.student-title { font-weight:600; }
+.student-meta { font-size: 12px; color: #94a3b8; }

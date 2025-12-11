@@ -1,8 +1,10 @@
 import json
 import os
+import time
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from . import models
+from django.conf import settings
 import redis.asyncio as aioredis
 
 REDIS_URL = os.environ.get("REDIS_URL", "redis://127.0.0.1:6379/0")
@@ -14,8 +16,10 @@ class UpdateConsumer(AsyncWebsocketConsumer):
         self.task_id = self.scope["url_route"]["kwargs"]["task_id"]
         self.group_name = f"task_{self.task_id}"
 
-        self.redis = aioredis.from_url(f"{REDIS_URL}?ssl_cert_reqs=none", decode_responses=True)
-
+        if settings.DEBUG:
+            self.redis = aioredis.from_url(REDIS_URL, decode_responses=True)
+        else:
+            self.redis = aioredis.from_url(f"{REDIS_URL}?ssl_cert_reqs=none", decode_responses=True)
 
         await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.accept()
@@ -36,10 +40,19 @@ class UpdateConsumer(AsyncWebsocketConsumer):
         return self.user.profile.role
 
     async def add_student(self):
-        await self.redis.hset(f"students:{self.task_id}", self.user.id, self.user.username)
+        try:
+            await self.redis.hset(f"students:{self.task_id}", self.user.id, json.dumps({"username": self.user.username, "last_seen": str(int(time.time() * 1000))}))
+        except Exception:
+            try:
+                await self.redis.hset(f"students:{self.task_id}", self.user.id, self.user.username)
+            except Exception:
+                pass
 
     async def delete_student(self):
-        await self.redis.hdel(f"students:{self.task_id}", self.user.id)
+        try:
+            await self.redis.hdel(f"students:{self.task_id}", self.user.id)
+        except Exception:
+            pass
 
     @database_sync_to_async
     def _get_documents_map(self, task_id):
@@ -47,15 +60,30 @@ class UpdateConsumer(AsyncWebsocketConsumer):
         return {d["student_id"]: d["content"] for d in docs}
 
     async def get_students(self):
-        data = await self.redis.hgetall(f"students:{self.task_id}")
-        docs_map = await self._get_documents_map(self.task_id)
+        try:
+            data = await self.redis.hgetall(f"students:{self.task_id}")
+        except Exception:
+            data = {}
+        docs_map = await database_sync_to_async(self._get_documents_map_sync)(self.task_id)
         students = []
-        for uid, username in data.items():
-            sid = int(uid)
+        for uid, value in data.items():
+            try:
+                sid = int(uid)
+            except Exception:
+                continue
+            username = None
+            last_seen = None
+            try:
+                parsed = json.loads(value)
+                username = parsed.get('username')
+                last_seen = parsed.get('last_seen')
+            except Exception:
+                username = value
             students.append({
                 "id": sid,
                 "username": username,
-                "content": docs_map.get(sid, "")
+                "content": docs_map.get(sid, ""),
+                "last_seen": last_seen
             })
         return students
 
@@ -76,41 +104,78 @@ class UpdateConsumer(AsyncWebsocketConsumer):
         }))
 
     async def receive(self, text_data=None, bytes_data=None):
-        data = json.loads(text_data)
-        role = await self.get_user_role()
+        if not text_data:
+            return
+        if len(text_data) > 300_000:
+            return
+        try:
+            data = json.loads(text_data)
+        except Exception:
+            return
 
+        if data.get('type') == 'help_request':
+            student_id = self.user.id
+            payload = {
+                'student_id': student_id,
+                'username': self.user.username,
+                'note': data.get('note', ''),
+                'timestamp': int(time.time() * 1000)
+            }
+            await self.channel_layer.group_send(self.group_name, { 'type': 'send_help_request', **payload })
+            return
+
+        role = await self.get_user_role()
 
         if role == "student":
             student_id = self.user.id
-            content = data.get("content")
-
-            self.save_document(student_id, content)
+            content = data.get("content", "")
+            await database_sync_to_async(self._save_document_sync)(student_id, content)
+            try:
+                await self.redis.hset(f"students:{self.task_id}", self.user.id, json.dumps({"username": self.user.username, "last_seen": str(int(time.time() * 1000))}))
+            except Exception:
+                pass
         else:
-
             student_id = data.get("student_id")
-            content = data.get("content")
+            content = data.get("content", "")
+            if not student_id:
+                return
+            await database_sync_to_async(self._save_document_sync)(student_id, content)
 
-            self.save_document(student_id, content)
-
+        seq = data.get('seq') if isinstance(data.get('seq'), int) else int(time.time() * 1000)
 
         await self.channel_layer.group_send(
             self.group_name,
             {
                 "type": "broadcast_change",
                 "student_id": student_id,
-                "content": content
+                "content": content,
+                "seq": seq
             }
         )
+
+    async def send_help_request(self, event):
+        payload = {
+            'type': 'help_request',
+            'student_id': event.get('student_id'),
+            'username': event.get('username'),
+            'note': event.get('note', ''),
+            'timestamp': event.get('timestamp')
+        }
+        await self.send(text_data=json.dumps(payload))
 
     async def broadcast_change(self, event):
         await self.send(text_data=json.dumps({
             "type": "broadcast_change",
             "student_id": event["student_id"],
-            "content": event["content"]
+            "content": event["content"],
+            "seq": event.get('seq')
         }))
 
-    @database_sync_to_async
-    def save_document(self, student_id, content):
+    def _get_documents_map_sync(self, task_id):
+        docs = models.TaskDocument.objects.filter(task_id=task_id).values("student_id", "content")
+        return {d["student_id"]: d["content"] for d in docs}
+
+    def _save_document_sync(self, student_id, content):
         doc, _ = models.TaskDocument.objects.get_or_create(
             task_id=self.task_id,
             student_id=student_id

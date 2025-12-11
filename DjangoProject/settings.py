@@ -170,11 +170,25 @@ ASGI_APPLICATION = 'DjangoProject.asgi.application'
 
 REDIS_URL = os.environ.get("REDIS_URL", "redis://127.0.0.1:6379/0")
 
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {
-            "hosts": [f"{REDIS_URL}?ssl_cert_reqs=none"],
+# Decide SSL usage based on DEBUG flag
+if DEBUG:
+    # LOCAL — NO SSL ALLOWED
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels_redis.core.RedisChannelLayer",
+            "CONFIG": {
+                "hosts": [REDIS_URL],  # <-- plain URL, no SSL params
+            },
         },
-    },
-}
+    }
+else:
+    # PRODUCTION — HEROKU REDIS USES TLS
+    ssl_url = f"{REDIS_URL}?ssl_cert_reqs=none"
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels_redis.core.RedisChannelLayer",
+            "CONFIG": {
+                "hosts": [ssl_url],  # <-- only add SSL for Heroku
+            },
+        },
+    }

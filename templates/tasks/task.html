@@ -18,6 +18,31 @@
 
     <div class="task-body">
         <div class="editor-wrap">
+            <!-- Connection indicator and teacher info -->
+            <div class="editor-topbar" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <div style="display:flex;gap:12px;align-items:center;">
+                    <div id="ws-connection-indicator" style="display:flex;gap:8px;align-items:center;">
+                        <span class="dot" style="width:10px;height:10px;border-radius:999px;display:inline-block;background:#94a3b8"></span>
+                        <span class="text">Offline</span>
+                    </div>
+                    <div id="students-online" style="font-size:13px;color:var(--muted);">Online: <span id="students-online-count">0</span></div>
+                </div>
+
+                {% if user_role == "teacher" %}
+                <div style="display:flex;gap:12px;align-items:center;">
+                    <div id="teacher-current-student" style="font-weight:700;color:#fff;">No student selected</div>
+                    <button id="toggle-lock" class="btn btn-ghost">Lock editing</button>
+                    <a id="btn-save-snapshot" class="btn btn-ghost" role="button">Save snapshot</a>
+                    <a id="btn-show-diff" class="btn btn-ghost">Show diff</a>
+                </div>
+                {% else %}
+                <div style="display:flex;gap:12px;align-items:center;">
+                    <a id="btn-save-snapshot" class="btn btn-ghost" role="button">Save snapshot</a>
+                    <a id="btn-show-diff" class="btn btn-ghost">Show diff</a>
+                </div>
+                {% endif %}
+            </div>
+
             <label for="content" class="sr-only">Task editor content</label>
             <textarea name="content" id="content" hidden>{{ submission.content }}</textarea>
             <div id="editor" class="cm-editor" aria-label="Task editor"></div>
@@ -46,6 +71,32 @@
         </div>
     {% endif %}
 
+    <!-- Help request UI -->
+    {% if user_role == "student" %}
+    <button id="btn-request-help" class="help-btn" title="Request teacher's help">Need help</button>
+    {% endif %}
+
+    <!-- Toast for teacher notifications -->
+    <div id="help-toast" class="help-toast" style="display:none;">
+        <div class="help-toast-content">
+            <div><strong id="help-toast-title"></strong></div>
+            <div id="help-toast-note" style="margin-top:6px;color:var(--muted)"></div>
+            <div style="margin-top:8px;text-align:right;"><button id="help-toast-close" class="btn btn-ghost">Close</button></div>
+        </div>
+    </div>
+
+    <!-- Diff modal -->
+    <div id="diff-modal" style="display:none;position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);background:var(--card);border:1px solid var(--border);padding:16px;border-radius:10px;z-index:9999;max-width:90%;max-height:80%;overflow:auto;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <h3 style="margin:0;color:#fff;">Diff - Last saved vs Current</h3>
+            <button class="close btn btn-ghost">Close</button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <pre class="old" style="white-space:pre-wrap;background:rgba(255,255,255,0.02);padding:8px;border-radius:6px;border:1px solid var(--border);overflow:auto;max-height:60vh;color:var(--muted);"></pre>
+            <pre class="new" style="white-space:pre-wrap;background:rgba(255,255,255,0.02);padding:8px;border-radius:6px;border:1px solid var(--border);overflow:auto;max-height:60vh;color:#dbeafe;"></pre>
+        </div>
+    </div>
+
     {{ autosave_url|json_script:"autosave-url-data" }}
     {{ csrf_token|json_script:"csrf-token-data" }}
     {{ user_role|json_script:"user-role" }}
@@ -63,6 +114,7 @@
         }
         window.STUDENT_CACHE = {}
     </script>
-    {% vite_asset 'static/js/editor.js' %}
+
+    {% vite_asset 'js/editor.js' %}
 </div>
 {% endblock %}
