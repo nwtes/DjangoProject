@@ -22,38 +22,55 @@
                     <div class="avatar">{{ user.username|slice:":1"|upper }}</div>
                     <div class="profile-info">
                         <div class="username">{{ user.username }}</div>
-                        <a class="link" href="#">Manage account</a>
+                        <a class="link" href="{% url 'profile' %}">View profile</a>
                     </div>
                 {% else %}
                     <div class="profile-info">
                         <a class="link" href="{% url 'login' %}">Sign in</a>
+                        <a class="link" href="{% url 'register' %}">Register</a>
                     </div>
                 {% endif %}
             </div>
 
             <nav class="nav-links">
-                <a class="nav-item" href="#">Dashboard</a>
-                <a class="nav-item" href="#">My groups</a>
-                <a class="nav-item" href="#">My tasks
-                    {% if pending_tasks_count %}
-                        <span class="badge">{{ pending_tasks_count }}</span>
+                {% if user.is_authenticated %}
+                    <a class="nav-item" href="{% url 'home' %}">Home</a>
+                    {% if user.profile.role == "teacher" %}
+                        <a class="nav-item" href="{% url 'teacher_dashboard' %}">Teacher dashboard</a>
+                    {% else %}
+                        <a class="nav-item" href="{% url 'student_dashboard' %}">Student dashboard</a>
                     {% endif %}
-                </a>
-                <a class="nav-item" href="#">Subjects
-                    {% if subjects_count %}
-                        <span class="badge">{{ subjects_count }}</span>
-                    {% endif %}
-                </a>
-                <a class="nav-item" href="#">Settings</a>
-                {% block sidebar_extra %}{% endblock %}
-                <form action="{% url 'logout' %}" method="POST">
-                    {% csrf_token %}
-                    <button type="submit" class="nav-item logout">Logout
-                        {% if ungraded_count %}
-                            <span class="badge badge-alert">{{ ungraded_count }}</span>
+                    <a class="nav-item" href="{% url 'teacher_groups' %}">My groups</a>
+                    {% if user.profile.role == 'teacher' %}
+                        <a class="nav-item" href="{% url 'teacher_tasks' %}">My tasks
+                        {% if pending_tasks_count %}
+                            <span class="badge">{{ pending_tasks_count }}</span>
                         {% endif %}
-                    </button>
-                </form>
+                     </a>
+                    {% else %}
+                        <a class="nav-item" href="{% url 'student_tasks' %}">My tasks
+                        {% if pending_tasks_count %}
+                            <span class="badge">{{ pending_tasks_count }}</span>
+                        {% endif %}
+                    </a>
+                    {% endif %}
+
+                    <a class="nav-item" href="{% url 'create_task' %}">Create task</a>
+                    <a class="nav-item" href="{% url 'live_tasks_available' %}">Live tasks</a>
+                    <form action="{% url 'logout' %}" method="POST">
+                        {% csrf_token %}
+                        <button type="submit" class="nav-item logout">Logout
+                            {% if ungraded_count %}
+                                <span class="badge badge-alert">{{ ungraded_count }}</span>
+                            {% endif %}
+                        </button>
+                    </form>
+                {% else %}
+                    <a class="nav-item" href="{% url 'home' %}">Home</a>
+                    <a class="nav-item" href="{% url 'login' %}">Login</a>
+                    <a class="nav-item" href="{% url 'register' %}">Register</a>
+                {% endif %}
+                {% block sidebar_extra %}{% endblock %}
             </nav>
         </aside>
 

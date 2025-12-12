@@ -1,6 +1,5 @@
 from django.contrib.auth.models import User
 from django.db import models
-from django.db.models import Q
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
@@ -14,6 +13,11 @@ class Profile(models.Model):
 
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='student')
+
+    display_name = models.CharField(max_length=100, blank=True, null=True)
+    bio = models.TextField(blank=True, null=True)
+    phone = models.CharField(max_length=32, blank=True, null=True)
+    last_seen = models.DateTimeField(blank=True, null=True)
 
     '''group = models.ForeignKey(
         ClassGroup,
@@ -43,4 +47,7 @@ def create_or_update_user_profile(sender, instance, created, **kwargs):
     if created:
         Profile.objects.create(user=instance)
     else:
-        instance.profile.save()
+        try:
+            instance.profile.save()
+        except Exception:
+            Profile.objects.get_or_create(user=instance)

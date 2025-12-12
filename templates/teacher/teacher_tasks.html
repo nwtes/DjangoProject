@@ -1,0 +1,88 @@
+{% extends '_base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Tasks (Your created tasks)</h1>
+    <div class="header-actions">
+        <a href="{% url 'create_task' %}" class="btn btn-primary">New task</a>
+    </div>
+</div>
+
+<form method="get" class="card filters-bar">
+    <label class="small">Group
+        <select name="group" class="btn">
+            <option value="">All groups</option>
+            {% for g in groups %}
+                <option value="{{ g.id }}" {% if request.GET.group|stringformat:"s" == g.id|stringformat:"s" %}selected{% endif %}>{{ g.name }}</option>
+            {% endfor %}
+        </select>
+    </label>
+
+    <label class="small">Grading
+        <select name="graded" class="btn">
+            <option value="">All</option>
+            <option value="graded" {% if request.GET.graded == 'graded' %}selected{% endif %}>Graded</option>
+            <option value="ungraded" {% if request.GET.graded == 'ungraded' %}selected{% endif %}>Ungraded</option>
+        </select>
+    </label>
+
+    <label class="small">Submission
+        <select name="submitted" class="btn">
+            <option value="">All</option>
+            <option value="submitted" {% if request.GET.submitted == 'submitted' %}selected{% endif %}>Submitted</option>
+            <option value="unsubmitted" {% if request.GET.submitted == 'unsubmitted' %}selected{% endif %}>Unsubmitted</option>
+        </select>
+    </label>
+
+    <div style="margin-left:auto; display:flex; gap:8px;">
+        <button type="submit" class="btn btn-primary">Apply</button>
+        <a href="?" class="btn">Reset</a>
+    </div>
+</form>
+
+<div class="inbox-container" style="margin-top:16px;">
+    <table class="inbox-table" aria-describedby="tasks-list">
+        <thead>
+            <tr>
+                <th style="width:36%;">Task</th>
+                <th style="width:20%;">Group / Subject</th>
+                <th style="width:14%;">Submissions</th>
+                <th style="width:12%;">Due</th>
+                <th style="width:18%;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if tasks %}
+                {% for task in tasks %}
+                    <tr data-task-id="{{ task.id }}">
+                        <td>
+                            <div style="font-weight:700;">{{ task.title }}</div>
+                            <div class="small">Created: {{ task.created_at|default:task.id }}</div>
+                            <div class="header-desc small">{{ task.description|truncatechars:180 }}</div>
+                        </td>
+                        <td class="small">{{ task.group.name }} • {{ task.group.subject }}</td>
+                        <td class="small">{% with cnt=task.submission_set.count %}{{ cnt }}{% endwith %}</td>
+                        <td class="small">&mdash;</td>
+                        <td>
+                            <div style="display:flex; gap:8px;">
+                                <a href="{% url 'view_task' task.id %}" class="btn">Open</a>
+                                <a href="{% url 'edit_task' task.id %}" class="btn">Edit</a>
+                                <form method="POST" action="{% url 'delete_task' task.id %}" style="display:inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-danger">Delete</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="5" style="padding:22px; text-align:center; color:var(--muted);">No tasks found.</td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

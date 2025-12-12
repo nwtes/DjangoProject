@@ -1,0 +1,37 @@
+{% extends '_base.html' %}
+
+{% block content %}
+<div class="form-card card">
+    <div style="display:flex;gap:12px;align-items:center;">
+        <div class="avatar" style="width:72px;height:72px;border-radius:12px;font-size:24px;display:inline-flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.02);">
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M12 12c2.761 0 5-2.239 5-5s-2.239-5-5-5-5 2.239-5 5 2.239 5 5 5z" fill="currentColor" opacity="0.9"></path>
+                <path d="M2 20c0-3.866 3.582-7 10-7s10 3.134 10 7v1H2v-1z" fill="currentColor" opacity="0.6"></path>
+            </svg>
+        </div>
+        <div>
+            <h2 style="margin:0">{{ profile.display_name|default:profile.user.username }}</h2>
+            <div class="small">{{ profile.role|capfirst }}</div>
+        </div>
+        <div style="margin-left:auto">
+            <a class="btn" href="{% url 'edit_profile' %}">Edit profile</a>
+        </div>
+    </div>
+
+    <div style="margin-top:12px;">
+        <div class="small">Bio</div>
+        <div>{{ profile.bio|linebreaksbr|default:"No bio yet." }}</div>
+    </div>
+
+    <div style="margin-top:12px;display:flex;gap:12px;">
+        <div>
+            <div class="small">Email</div>
+            <div>{{ profile.user.email }}</div>
+        </div>
+        <div>
+            <div class="small">Phone</div>
+            <div>{{ profile.phone|default:"—" }}</div>
+        </div>
+    </div>
+</div>
+{% endblock %}

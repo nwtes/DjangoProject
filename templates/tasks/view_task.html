@@ -1,21 +1,71 @@
 {% extends '_base.html' %}
 
 {% block content %}
-    <h1>Task title</h1>
-    {{ task.title }}
-    <h2>Task description</h2>
-    {{ task.description }}
-    <h2>Group assigned by this task</h2>
-    {{ task.group }}
-    <h1>Manage task</h1>
-    <a href="{% url 'edit_task' task.id %}">Edit task</a>
-    <br>
-    <form method="POST" action="{% url 'delete_task' task.id %}">
-        {% csrf_token %}
-        <button type="submit">Delete</button>
-    </form>
-    <p>Task submissions:</p>
-    {% for s in submission %}
-        <a href="{% url 'submission' s.id %}">Submission by {{ s.student }} from {{ s.task.group }}</a>
-    {% endfor %}
+<div class="teacher-task-view">
+    <div class="task-card">
+        <div class="task-header">
+            <div>
+                <h1>{{ task.title }}</h1>
+                <div class="task-meta">Created by {{ task.created_by }} • Group: {{ task.group.name }}</div>
+            </div>
+            <div class="task-actions">
+                <a class="btn" href="{% url 'edit_task' task.id %}">Edit</a>
+                <form method="POST" action="{% url 'delete_task' task.id %}" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+
+        <section class="task-body">
+            <h2>Task description</h2>
+            <div class="header-desc">{{ task.description|linebreaksbr }}</div>
+        </section>
+
+        <section class="submissions">
+            <h3>Submissions</h3>
+            {% if submission %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>Submitted at</th>
+                            <th>Grade</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in submission %}
+                        <tr class="submission-row">
+                            <td class="student"><span class="avatar-sm">{{ s.student.user.username|slice:":1"|upper }}</span> {{ s.student }}</td>
+                            <td class="small">{{ s.submitted_at|date:"M d, Y H:i" }}</td>
+                            <td class="small">{% if s.grade %}<span class="badge graded">{{ s.grade }}</span>{% else %}<span class="badge pending">Not graded</span>{% endif %}</td>
+                            <td class="actions-col"><a class="btn" href="{% url 'submission' s.id %}">View</a></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <div class="no-submissions">No submissions yet.</div>
+            {% endif %}
+        </section>
+    </div>
+
+    <aside class="task-sidebar">
+        <div style="display:flex;flex-direction:column;gap:8px;">
+            <div>
+                <div class="small">Group</div>
+                <div>{{ task.group.name }}</div>
+            </div>
+            <div>
+                <div class="small">Live</div>
+                <div>{% if task.is_live %}Yes{% else %}No{% endif %}</div>
+            </div>
+            <div>
+                <div class="small">Total submissions</div>
+                <div>{{ submission|length }}</div>
+            </div>
+        </div>
+    </aside>
+</div>
 {% endblock %}

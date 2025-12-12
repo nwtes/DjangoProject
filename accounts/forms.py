@@ -9,3 +9,11 @@ class UserRegistrationForm(forms.ModelForm):
     class Meta:
         model = User
         fields = ['username','email','password','role']
+
+class ProfileForm(forms.ModelForm):
+    class Meta:
+        model = Profile
+        fields = ['display_name','bio','phone']
+        widgets = {
+            'bio': forms.Textarea(attrs={'rows':4}),
+        }

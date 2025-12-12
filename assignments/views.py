@@ -9,7 +9,7 @@ from django.http import JsonResponse
 from django.middleware.csrf import get_token
 from editor.models import TaskDocument
 import json
-# Create your views here.
+
 
 def student_task_view(request, task_id):
     student = request.user.profile
@@ -39,6 +39,7 @@ def student_task_view(request, task_id):
 
     return render(request, "tasks/task.html", context)
 
+
 @login_required
 def live_tasks_for_student(request):
     user = request.user
@@ -46,6 +47,7 @@ def live_tasks_for_student(request):
     tasks = Task.objects.filter(group__groupmembership__student=profile, is_live=True).values('id','title','group__name')
     data = [{'id': t['id'], 'title': t['title'], 'group': t.get('group__name','')} for t in tasks]
     return JsonResponse({'tasks': data})
+
 
 def submission_task_view(request,submission_id):
     submission = get_object_or_404(Submission,id = submission_id)
@@ -62,9 +64,11 @@ def submission_task_view(request,submission_id):
         form = GradingForm()
     return render(request,"tasks/view_submission.html",{"submission":submission,"form" : form})
 
+
 def student_submission_view(request,submission_id):
     submission = get_object_or_404(Submission,id = submission_id)
     return render(request, "tasks/student_view_submission.html",{"submission" : submission})
+
 
 @login_required
 def autosave_task(request, task_id):
@@ -111,10 +115,10 @@ def submit_task(request,task_id):
         pass
     return redirect("student_dashboard")
 
+
 def student_tasks_view(request):
     student = request.user.profile
     print("GET:", request.GET)
-    #submissions = Submission.objects.filter(task=OuterRef('pk'),student=student)
     submissions = FinalSubmission.objects.filter(submission__task = OuterRef('pk'),submission__student = student)
     grade_subquery = Submission.objects.filter(
         task=OuterRef('pk'),
@@ -140,7 +144,6 @@ def student_tasks_view(request):
         subjects__classgroup__groupmembership__student=student
     ).distinct()
 
-    # ---Filters from get form
     group_id = request.GET.get("group")
     teacher_id = request.GET.get("teacher")
     graded = request.GET.get("graded")
@@ -165,3 +168,32 @@ def student_tasks_view(request):
     }
 
     return render(request,'students/student_tasks.html',context)
+
+
+@login_required
+def teacher_tasks_view(request):
+    teacher = request.user.profile
+    tasks = Task.objects.filter(created_by=teacher)
+    groups = ClassGroup.objects.filter(subject__teacher=teacher)
+
+    group_id = request.GET.get('group')
+    graded = request.GET.get('graded')
+    submitted = request.GET.get('submitted')
+
+    if group_id:
+        tasks = tasks.filter(group__id=group_id)
+    if graded == 'graded':
+        tasks = tasks.filter(submission__grade__isnull=False)
+    elif graded == 'ungraded':
+        tasks = tasks.filter(submission__grade__isnull=True)
+    if submitted == 'submitted':
+        tasks = tasks.filter(submission__submitted=True)
+    elif submitted == 'unsubmitted':
+        tasks = tasks.filter(submission__submitted=False)
+
+    context = {
+        'tasks': tasks,
+        'groups': groups
+    }
+
+    return render(request,'teacher/teacher_tasks.html',context)
