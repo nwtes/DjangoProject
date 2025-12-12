@@ -1,4 +1,5 @@
 {% extends "_base.html" %}
+{% load static %}
 {% load django_vite %}
 
 {% block content %}
@@ -35,18 +36,18 @@
                     <div id="teacher-current-student" style="font-weight:700;color:#fff;">No student selected</div>
                     <button id="toggle-lock" class="btn btn-ghost">Lock editing</button>
                     <a id="btn-save-snapshot" class="btn btn-ghost" role="button">Save snapshot</a>
-                    <a id="btn-show-diff" class="btn btn-ghost">Show diff</a>
+                    <a id="btn-show-diff" class="btn btn-ghost" >Show diff</a>
                 </div>
                 {% else %}
                 <div style="display:flex;gap:12px;align-items:center;">
                     <a id="btn-save-snapshot" class="btn btn-ghost" role="button">Save snapshot</a>
-                    <a id="btn-show-diff" class="btn btn-ghost">Show diff</a>
+                    <a id="btn-show-diff" class="btn btn-ghost" >Show diff</a>
                 </div>
                 {% endif %}
             </div>
 
             <label for="content" class="sr-only">Task editor content</label>
-            <textarea name="content" id="content" hidden>{{ submission.content }}</textarea>
+            <textarea name="content" id="content" hidden>{% if submission.content %}{{ submission.content }}{% else %}{{ task.starter_code|default:'' }}{% endif %}</textarea>
             <div id="editor" class="cm-editor" aria-label="Task editor"></div>
         </div>
 
@@ -73,7 +74,6 @@
         </div>
     {% endif %}
 
-    <!-- Help request UI -->
     {% if user_role == "student" %}
     <button id="btn-request-help" class="help-btn" title="Request teacher's help">Need help</button>
     {% endif %}
@@ -103,6 +103,7 @@
     {{ csrf_token|json_script:"csrf-token-data" }}
     {{ user_role|json_script:"user-role" }}
     {{ user_id|json_script:"user-id" }}
+
     <script>
         window.isLive = {{ is_live|yesno:"true,false" }}
         window.docID = {{ document.id }}
@@ -116,6 +117,112 @@
         }
         window.STUDENT_CACHE = {}
     </script>
+
+    {% if task.task_type == 'python' %}
+    <script>
+    (function(){
+        let pyodideReady = false;
+        let pyodideInstance = null;
+
+        async function loadPyodideLib() {
+            if (window.loadPyodide) return;
+            await new Promise((resolve, reject) => {
+                const s = document.createElement('script');
+                s.src = 'https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js';
+                s.onload = resolve;
+                s.onerror = reject;
+                document.head.appendChild(s);
+            });
+        }
+
+        async function ensurePyodide() {
+            if (pyodideReady) return pyodideInstance;
+            await loadPyodideLib();
+            pyodideInstance = await loadPyodide({ indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.23.4/full/' });
+            const runner = `
+import sys, io, runpy, traceback
+
+def run_user_module(path='user_script.py', names=('main','solve','run')):
+    stdout = io.StringIO()
+    old = sys.stdout
+    sys.stdout = stdout
+    try:
+        ns = runpy.run_path(path)
+        for n in names:
+            f = ns.get(n)
+            if callable(f):
+                r = f()
+                return {'result': r, 'stdout': stdout.getvalue()}
+        if 'result' in ns:
+            return {'result': ns['result'], 'stdout': stdout.getvalue()}
+        return {'error': 'No callable or result variable', 'stdout': stdout.getvalue()}
+    except Exception as e:
+        return {'error': str(e), 'traceback': traceback.format_exc(), 'stdout': stdout.getvalue()}
+    finally:
+        sys.stdout = old
+`;
+            await pyodideInstance.runPythonAsync(runner);
+            pyodideReady = true;
+            return pyodideInstance;
+        }
+
+        async function runTaskCode(code) {
+            const py = await ensurePyodide();
+            py.FS.writeFile('user_script.py', code);
+            const jsonStr = await py.runPythonAsync("import json\njson.dumps(run_user_module('user_script.py'), ensure_ascii=False)");
+            const text = (jsonStr && jsonStr.toJs) ? jsonStr.toJs() : String(jsonStr);
+            return JSON.parse(text);
+        }
+
+        // create Run button and output area
+        const topbar = document.querySelector('.editor-topbar');
+        if (topbar) {
+            const runBtn = document.createElement('button');
+            runBtn.className = 'btn btn-accent';
+            runBtn.id = 'task-run-btn';
+            runBtn.textContent = 'Run (Py)';
+            const outPre = document.createElement('pre');
+            outPre.id = 'py-output';
+            outPre.style.background = 'rgba(255,255,255,0.02)';
+            outPre.style.padding = '8px';
+            outPre.style.marginTop = '8px';
+            outPre.style.whiteSpace = 'pre-wrap';
+            topbar.appendChild(runBtn);
+            topbar.parentNode.insertBefore(outPre, topbar.nextSibling);
+
+            runBtn.addEventListener('click', async function(){
+                runBtn.disabled = true;
+                outPre.textContent = 'Running...';
+                let code = document.getElementById('content').value;
+                try {
+                    const start = Date.now();
+                    while (!window.editorReady && Date.now() - start < 3000) {
+                        await new Promise(r => setTimeout(r, 50));
+                    }
+                    if (window.editorReady && window.editorInstance && window.editorInstance.state) {
+                        code = window.editorInstance.state.doc.toString();
+                    }
+                } catch (e) {
+                    code = document.getElementById('content').value;
+                }
+
+                try{
+                    const res = await runTaskCode(code);
+                    outPre.textContent = '';
+                    if(res.stdout) outPre.textContent += res.stdout + '\n';
+                    if(res.error) outPre.textContent += 'ERROR: '+(res.traceback || res.error);
+                    else if('result' in res) outPre.textContent += 'RESULT: '+ JSON.stringify(res.result);
+                    else outPre.textContent += 'No result.';
+                }catch(e){
+                    outPre.textContent = 'Runtime error: '+String(e);
+                }finally{
+                    runBtn.disabled = false;
+                }
+            });
+        }
+    })();
+    </script>
+    {% endif %}
 
     {% vite_asset 'js/editor.js' %}
 </div>

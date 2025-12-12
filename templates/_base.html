@@ -46,7 +46,9 @@
                         {% if pending_tasks_count %}
                             <span class="badge">{{ pending_tasks_count }}</span>
                         {% endif %}
-                     </a>
+                        </a>
+                        <a class="nav-item" href="{% url 'create_task' %}">Create task</a>
+                        <a class="nav-item" href="{% url 'live_tasks_available' %}">Live tasks</a>
                     {% else %}
                         <a class="nav-item" href="{% url 'student_tasks' %}">My tasks
                         {% if pending_tasks_count %}
@@ -54,9 +56,6 @@
                         {% endif %}
                     </a>
                     {% endif %}
-
-                    <a class="nav-item" href="{% url 'create_task' %}">Create task</a>
-                    <a class="nav-item" href="{% url 'live_tasks_available' %}">Live tasks</a>
                     <form action="{% url 'logout' %}" method="POST">
                         {% csrf_token %}
                         <button type="submit" class="nav-item logout">Logout

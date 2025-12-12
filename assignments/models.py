@@ -1,10 +1,14 @@
-from django.core.exceptions import ValidationError
 from django.db import models
 from accounts.models import Profile
 from classrooms.models import ClassGroup
 # Create your models here.
 
 class Task(models.Model):
+    TASK_TYPE_CHOICES = [
+        ('text', 'Text'),
+        ('python', 'Python'),
+    ]
+
     title = models.CharField(max_length= 64)
     description = models.TextField()
     created_by = models.ForeignKey(
@@ -15,6 +19,8 @@ class Task(models.Model):
     )
     group = models.ForeignKey(ClassGroup,on_delete = models.CASCADE,related_name="task")
     is_live = models.BooleanField(default = False)
+    task_type = models.CharField(max_length=16, choices=TASK_TYPE_CHOICES, default='text')
+    starter_code = models.TextField(blank=True, null=True)
 
     def clean(self):
 

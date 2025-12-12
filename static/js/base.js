@@ -1,11 +1,10 @@
-import { EditorState } from '@codemirror/state';
+import { EditorState, StateEffect } from '@codemirror/state';
 import { highlightSelectionMatches } from '@codemirror/search';
 import { indentWithTab, history, defaultKeymap, historyKeymap } from '@codemirror/commands';
 import { foldGutter, indentOnInput, indentUnit, bracketMatching, foldKeymap, syntaxHighlighting, defaultHighlightStyle } from '@codemirror/language';
 import { closeBrackets, autocompletion, closeBracketsKeymap, completionKeymap } from '@codemirror/autocomplete';
 import { lineNumbers, highlightActiveLineGutter, highlightSpecialChars, drawSelection, rectangularSelection, crosshairCursor, highlightActiveLine, keymap, EditorView, ViewPlugin } from '@codemirror/view';
-
-import { javascript } from "@codemirror/lang-javascript";
+import { python } from '@codemirror/lang-python';
 let socket = null;
 window.LAST_SENT_SEQ = 0;
 window.LAST_REMOTE_SEQ = {};
@@ -64,6 +63,10 @@ export function initEditor({ csrfToken, autosaveUrl,userRole }) {
             if (update.docChanged) {
                 const txt = update.view.state.doc.toString();
                 triggerAutosave(txt);
+                // keep hidden textarea in sync so other scripts can read live content
+                try {
+                    if (textarea) textarea.value = txt;
+                } catch (e) {}
             }
         }
     }));
@@ -97,13 +100,18 @@ export function initEditor({ csrfToken, autosaveUrl,userRole }) {
                     ...foldKeymap,
                     ...completionKeymap,
                 ]),
-                javascript(),
+                python(),
                 syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
                 isLive ? liveUpdatePlugin : [],
             ]
         }),
         parent: document.getElementById("editor")
     });
+
+
+    // expose editor instance globally so other scripts (run button, pyodide loader) can access live content
+    try { window.editorInstance = editor; window.editorReady = true; } catch (e) {}
+
     if (isLive) {
     console.log("Task is live — attempting websocket connection...");
 
@@ -194,10 +202,10 @@ export function initEditor({ csrfToken, autosaveUrl,userRole }) {
 
         if (userRole === "student") {
             if (data.type === 'teacher_watch') {
-                if (data.action === 'start' && data.student_id == CURRENT_STUDENT_ID) {
+                if (data.action === 'start' && String(data.student_id) === String(CURRENT_STUDENT_ID)) {
                     const ind = document.getElementById('teacher-watching-indicator'); if (ind) ind.style.display = 'inline-block';
                 }
-                if (data.action === 'stop' && data.student_id == CURRENT_STUDENT_ID) {
+                if (data.action === 'stop' && String(data.student_id) === String(CURRENT_STUDENT_ID)) {
                     const ind = document.getElementById('teacher-watching-indicator'); if (ind) ind.style.display = 'none';
                 }
             }

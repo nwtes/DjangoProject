@@ -1,0 +1,124 @@
+{% extends '_base.html' %}
+
+{% block content %}
+<h2>Pyodide single-file editor</h2>
+
+<div style="max-width:900px;">
+  <label for="editor">Editor (will be saved as <code>user_script.py</code>)</label>
+  <div style="font-size:0.9rem;color:var(--muted);margin-top:6px;">Function names checked: <code>main</code>, <code>solve</code>, <code>run</code></div>
+  <textarea id="editor" aria-label="Pyodide editor" style="width:100%; height:280px; font-family:monospace; margin-top:8px;"># Example:
+def main():
+    print("printed text")
+    return 123
+</textarea>
+
+  <div style="margin-top:8px;">
+    <button id="runBtn" class="btn">Run</button>
+    <span id="status" style="margin-left:12px"></span>
+  </div>
+
+  <h4 style="margin-top:12px">Output</h4>
+  <pre id="stdout" style="background:#f6f6f6; padding:8px; white-space:pre-wrap;"></pre>
+  <h4>Result / Error</h4>
+  <pre id="result" style="background:#fffbe6; padding:8px; white-space:pre-wrap;"></pre>
+  <h4 style="margin-top:12px">Debug (raw JSON from Pyodide)</h4>
+  <pre id="debug" style="background:#eef6ff; padding:8px; white-space:pre-wrap; color:#0b1220;"></pre>
+</div>
+
+<script src="https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js"></script>
+<script type="module">
+const editor = document.getElementById('editor');
+const runBtn = document.getElementById('runBtn');
+const status = document.getElementById('status');
+const stdoutEl = document.getElementById('stdout');
+const resultEl = document.getElementById('result');
+const debugEl = document.getElementById('debug');
+
+let pyodide;
+
+async function ensurePyodide() {
+  if (!pyodide) {
+    status.textContent = "Loading Pyodide…";
+    pyodide = await loadPyodide({
+      indexURL: "https://cdn.jsdelivr.net/pyodide/v0.23.4/full/"
+    });
+    status.textContent = "";
+  }
+  return pyodide;
+}
+
+const RUNNER_PY = `
+import sys, io, importlib, runpy, json, traceback
+
+def run_user_module(path="user_script.py", names=("main","solve","run")):
+    stdout = io.StringIO()
+    old = sys.stdout
+    sys.stdout = stdout
+    try:
+        try:
+            mod = importlib.import_module("user_script")
+            mod = importlib.reload(mod)
+            ns = mod.__dict__
+        except Exception:
+            ns = runpy.run_path(path)
+        # Call first available function
+        for n in names:
+            f = ns.get(n)
+            if callable(f):
+                r = f()
+                return {"result": r, "stdout": stdout.getvalue()}
+        # Fallback: variable "result"
+        if "result" in ns:
+            return {"result": ns["result"], "stdout": stdout.getvalue()}
+        return {"error": "No callable or 'result' variable found", "stdout": stdout.getvalue()}
+    except Exception as e:
+        return {
+            "error": str(e),
+            "traceback": traceback.format_exc(),
+            "stdout": stdout.getvalue()
+        }
+    finally:
+        sys.stdout = old
+`;
+
+async function runUserCode() {
+  runBtn.disabled = true;
+  status.textContent = "Preparing…";
+  stdoutEl.textContent = "";
+  resultEl.textContent = "";
+  debugEl.textContent = "";
+
+  try {
+    const py = await ensurePyodide();
+    await py.runPythonAsync(RUNNER_PY);
+
+    py.FS.writeFile("user_script.py", editor.value);
+
+    status.textContent = "Running…";
+    const outJson = await py.runPythonAsync(`
+import json
+json.dumps(run_user_module(), ensure_ascii=False)
+`);
+    const data = JSON.parse(outJson);
+
+    debugEl.textContent = outJson;
+    stdoutEl.textContent = data.stdout || "";
+
+    if (data.error) {
+      resultEl.textContent = "ERROR:\n" + (data.traceback || data.error);
+    } else {
+      resultEl.textContent = "RESULT:\n" + JSON.stringify(data.result, null, 2);
+    }
+  } catch (err) {
+    resultEl.textContent = "Runtime error: " + String(err);
+  } finally {
+    status.textContent = "";
+    runBtn.disabled = false;
+  }
+}
+
+runBtn.addEventListener("click", runUserCode);
+</script>
+
+
+{% endblock %}
