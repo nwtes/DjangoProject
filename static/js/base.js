@@ -7,6 +7,11 @@ import { lineNumbers, highlightActiveLineGutter, highlightSpecialChars, drawSele
 
 import { javascript } from "@codemirror/lang-javascript";
 let socket = null;
+window.LAST_SENT_SEQ = 0;
+window.LAST_REMOTE_SEQ = {};
+window.LAST_LOCAL_EDIT_TS = 0;
+let liveSendTimer = null;
+let isApplyingRemote = false;
 export function initEditor({ csrfToken, autosaveUrl,userRole }) {
     const textarea = document.getElementById("content");
     const status = document.getElementById("autosave-status");
@@ -37,14 +42,21 @@ export function initEditor({ csrfToken, autosaveUrl,userRole }) {
     }
     const liveUpdatePlugin = EditorView.updateListener.of((update) => {
         if (update.docChanged) {
+            if (isApplyingRemote) return;
             const text = update.state.doc.toString();
-            try {
-                if (socket && socket.readyState === WebSocket.OPEN) {
-                    socket.send(JSON.stringify({ student_id: window.CURRENT_STUDENT_ID, content: text }));
+            window.LAST_LOCAL_EDIT_TS = Date.now();
+            clearTimeout(liveSendTimer);
+            liveSendTimer = setTimeout(() => {
+                try {
+                    if (socket && socket.readyState === WebSocket.OPEN) {
+                        const seq = Date.now();
+                        window.LAST_SENT_SEQ = seq;
+                        socket.send(JSON.stringify({ student_id: window.CURRENT_STUDENT_ID, content: text, seq: seq }));
+                    }
+                } catch (e) {
+                    console.warn('[WS] send failed', e);
                 }
-            } catch (e) {
-                console.warn('[WS] send failed', e);
-            }
+            }, 300);
         }
     });
     const autosavePlugin = ViewPlugin.define(() => ({
@@ -138,6 +150,7 @@ export function initEditor({ csrfToken, autosaveUrl,userRole }) {
 
         if (newText === current) return;
 
+        isApplyingRemote = true;
         editor.dispatch({
             changes: {
                 from: 0,
@@ -145,10 +158,39 @@ export function initEditor({ csrfToken, autosaveUrl,userRole }) {
                 insert: newText
             }
         });
+        setTimeout(() => { isApplyingRemote = false; }, 0);
     }
 
     socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
+
+        if (data.type === "broadcast_change") {
+            const sid = data.student_id;
+            const seq = Number(data.seq) || 0;
+            const last = window.LAST_REMOTE_SEQ[sid] || 0;
+            if (sid === window.CURRENT_STUDENT_ID && seq === window.LAST_SENT_SEQ) {
+                return;
+            }
+            if (seq <= last) {
+                return;
+            }
+            const now = Date.now();
+            const recentEdit = (now - (window.LAST_LOCAL_EDIT_TS || 0)) < 500;
+            window.LAST_REMOTE_SEQ[sid] = seq;
+            if (userRole === "student") {
+                if (sid === CURRENT_STUDENT_ID) {
+                    if (!recentEdit) applyRemoteContent(data.content);
+                }
+                return;
+            }
+            if (userRole === "teacher") {
+                window.STUDENT_CACHE[sid] = data.content;
+                if (sid === CURRENT_STUDENT_ID) {
+                    if (!recentEdit) applyRemoteContent(data.content);
+                }
+                return;
+            }
+        }
 
         if (userRole === "student") {
             if (data.type === 'teacher_watch') {
@@ -221,9 +263,9 @@ export function initEditor({ csrfToken, autosaveUrl,userRole }) {
 
                         const cached = window.STUDENT_CACHE[student.id];
                         if (cached !== undefined) {
-                            editor.dispatch({
-                                changes: { from: 0, to: editor.state.doc.length, insert: cached }
-                            });
+                            isApplyingRemote = true;
+                            editor.dispatch({ changes: { from: 0, to: editor.state.doc.length, insert: cached } });
+                            setTimeout(() => { isApplyingRemote = false; }, 0);
                         }
 
                         try {

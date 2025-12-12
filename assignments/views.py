@@ -39,6 +39,14 @@ def student_task_view(request, task_id):
 
     return render(request, "tasks/task.html", context)
 
+@login_required
+def live_tasks_for_student(request):
+    user = request.user
+    profile = user.profile
+    tasks = Task.objects.filter(group__groupmembership__student=profile, is_live=True).values('id','title','group__name')
+    data = [{'id': t['id'], 'title': t['title'], 'group': t.get('group__name','')} for t in tasks]
+    return JsonResponse({'tasks': data})
+
 def submission_task_view(request,submission_id):
     submission = get_object_or_404(Submission,id = submission_id)
     if request.method == "POST":

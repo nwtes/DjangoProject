@@ -368,6 +368,9 @@ body {
 .help-toast .help-toast-content { display:flex; flex-direction:column; }
 .help-toast .help-toast .btn { margin-left: auto; }
 
+.live-task-toast { position: fixed; right: 20px; bottom: 100px; z-index: 1300; min-width: 280px; }
+.live-task-toast .help-toast-content { padding: 12px; }
+
 .student-item { padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.03); cursor: pointer; }
 .student-item:hover { background: rgba(255,255,255,0.02); }
 .student-title { font-weight:600; }
