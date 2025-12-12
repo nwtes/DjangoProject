@@ -2,28 +2,16 @@
   "name": "djangoproject",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "type": "module",
   "scripts": {
     "build": "vite build",
     "dev": "vite",
-    "heroku-postbuild": "npm install && npm run build && node -e \"const fs=require('fs'); if(fs.existsSync('static_build/.vite/manifest.json')) fs.copyFileSync('static_build/.vite/manifest.json','static_build/manifest.json');\""
+    "heroku-postbuild": "npm run build && node -e \"const fs=require('fs'); if(fs.existsSync('static_build/.vite/manifest.json')) fs.copyFileSync('static_build/.vite/manifest.json','static_build/manifest.json');\""
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/nwtes/DjangoProject.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
   "engines": {
     "node": "20.x",
     "npm": ">=9"
   },
-  "bugs": {
-    "url": "https://github.com/nwtes/DjangoProject/issues"
-  },
-  "homepage": "https://github.com/nwtes/DjangoProject#readme",
   "dependencies": {
     "@codemirror/commands": "^6.1.2",
     "@codemirror/lang-javascript": "^6.1.1",

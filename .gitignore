@@ -21,7 +21,6 @@ db.sqlite3-journal
 media/
 
 # Static/build artefacts (Vite / Django collectstatic / build outputs)
-node_modules/
 dist/
 .vite/
 static_build/
@@ -31,10 +30,10 @@ static/assets/
 *.map
 
 # Vite manifest (if you regenerate it in CI) - optional
+# Vite manifest (if you regenerate it in CI) - optional
 # manifest.json
-
 # Node/npm/yarn
-npm-debug.log*
+# Node/npm/yarn
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
@@ -62,6 +61,7 @@ htmlcov/
 
 # Heroku / local runtime
 node_modules/
+node_modules/
 # keep Procfile and requirements.txt in repo
 
 # Misc
@@ -79,4 +79,5 @@ dist/
 build/
 
 # End of file
+
 
