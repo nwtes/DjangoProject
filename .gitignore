@@ -20,20 +20,9 @@ db.sqlite3
 db.sqlite3-journal
 media/
 
-# Static/build artefacts (Vite / Django collectstatic / build outputs)
-node_modules/
-dist/
-.vite/
-static_build/
-staticfiles/
-static/.cache/
-static/assets/
-*.map
 
-# Vite manifest (if you regenerate it in CI) - optional
-# manifest.json
 
-# Node/npm/yarn
+# Node / npm / yarn
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -61,14 +50,13 @@ htmlcov/
 .pytype/
 
 # Heroku / local runtime
-node_modules/
-# keep Procfile and requirements.txt in repo
+# Keep Procfile and requirements.txt in repo
 
 # Misc
 *.log
 *.bak
 
-# Don't commit local secret module
+# Local secrets / environment helpers
 env.py
 
 # Windows specific
@@ -79,4 +67,3 @@ dist/
 build/
 
 # End of file
-
