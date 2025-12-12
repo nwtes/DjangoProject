@@ -188,7 +188,7 @@ else:
         "default": {
             "BACKEND": "channels_redis.core.RedisChannelLayer",
             "CONFIG": {
-                "hosts": [ssl_url],  # <-- only add SSL for Heroku
+                "hosts": [ssl_url],
             },
         },
     }

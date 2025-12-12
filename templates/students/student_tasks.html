@@ -9,10 +9,9 @@
     </div>
 </div>
 
-<!-- Filters bar (full width) -->
-<form method="get" class="card" style="width:100%; display:flex; gap:12px; align-items:center; padding:12px; box-sizing:border-box;">
+<form method="get" class="card filters-bar">
     <label class="small">Group
-        <select name="group" class="btn" style="padding:8px 10px; min-width:160px;">
+        <select name="group" class="btn">
             <option value="">All groups</option>
             {% for g in groups %}
                 <option value="{{ g.id }}" {% if request.GET.group|stringformat:"s" == g.id|stringformat:"s" %}selected{% endif %}>{{ g.name }}</option>
@@ -21,7 +20,7 @@
     </label>
 
     <label class="small">Teacher
-        <select name="teacher" class="btn" style="padding:8px 10px; min-width:200px;">
+        <select name="teacher" class="btn">
             <option value="">All teachers</option>
             {% for t in teachers %}
                 <option value="{{ t.id }}" {% if request.GET.teacher|stringformat:"s" == t.id|stringformat:"s" %}selected{% endif %}>{{ t }}</option>
@@ -30,7 +29,7 @@
     </label>
 
     <label class="small">Grading
-        <select name="graded" class="btn" style="padding:8px 10px; min-width:160px;">
+        <select name="graded" class="btn">
             <option value="">All</option>
             <option value="graded" {% if request.GET.graded == 'graded' %}selected{% endif %}>Graded</option>
             <option value="ungraded" {% if request.GET.graded == 'ungraded' %}selected{% endif %}>Ungraded</option>
@@ -38,7 +37,7 @@
     </label>
 
     <label class="small">Submission
-        <select name="submitted" class="btn" style="padding:8px 10px; min-width:160px;">
+        <select name="submitted" class="btn">
             <option value="">All</option>
             <option value="submitted" {% if request.GET.submitted == 'submitted' %}selected{% endif %}>Submitted</option>
             <option value="unsubmitted" {% if request.GET.submitted == 'unsubmitted' %}selected{% endif %}>Unsubmitted</option>
@@ -51,7 +50,6 @@
     </div>
 </form>
 
-<!-- Tasks table -->
 <div class="inbox-container" style="margin-top:16px;">
     <table class="inbox-table" aria-describedby="tasks-list">
         <thead>

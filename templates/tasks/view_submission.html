@@ -6,9 +6,13 @@
     <p>{{ submission.task.description }}</p>
     <p>Students submission:</p>
     <p>{{ submission.content }}</p>
-    <form method="POST">
+    <div class="form-card card">
+    <form method="POST" class="form-row">
         {% csrf_token %}
         {{ form.as_p }}
-        <button type="submit">Grade</button>
+        <div class="form-actions">
+            <button class="btn btn-primary" type="submit">Grade</button>
+        </div>
     </form>
+    </div>
 {% endblock %}

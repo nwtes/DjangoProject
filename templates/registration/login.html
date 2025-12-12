@@ -9,12 +9,12 @@
     {% else %}
         <p> Please use following form to login</p>
     {% endif %}
-    <div class="login-form">
-        <form action="{% url 'login' %}" method="POST">
+    <div class="login-form form-card card">
+        <form action="{% url 'login' %}" method="POST" class="form-row">
             {% csrf_token %}
             {{ form.as_p }}
             <input type="hidden" name="next" value="{{next}}"/>
-            <p><input type="submit" value="login"></p>
+            <div class="form-actions"><button class="btn btn-primary" type="submit">Login</button></div>
         </form>
     </div>
 {% endblock %}
