@@ -193,4 +193,5 @@ else:
         },
     }
 DJANGO_VITE_MANIFEST_PATH = BASE_DIR / "static_build" / ".vite" / "manifest.json"
-DJANGO_VITE_STATIC_URL_PREFIX = "/static/assets/"
+DJANGO_VITE_STATIC_URL_PREFIX = "/static_build/"
+
