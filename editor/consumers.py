@@ -33,6 +33,26 @@ class UpdateConsumer(AsyncWebsocketConsumer):
         if role == "student":
             await self.delete_student()
             await self.broadcast_students_list()
+        else:
+            try:
+                watching_key = f"watching:{self.task_id}"
+                teacher_id = str(self.user.id)
+                prev = await self.redis.hget(watching_key, teacher_id)
+                if prev is not None:
+                    await self.redis.hdel(watching_key, teacher_id)
+                    await self.channel_layer.group_send(
+                        self.group_name,
+                        {
+                            "type": "teacher_watch_event",
+                            "action": "stop",
+                            "teacher_id": self.user.id,
+                            "teacher_username": self.user.username,
+                            "student_id": int(prev)
+                        }
+                    )
+            except Exception:
+                pass
+
         await self.channel_layer.group_discard(self.group_name, self.channel_name)
 
     @database_sync_to_async
@@ -124,6 +144,46 @@ class UpdateConsumer(AsyncWebsocketConsumer):
             await self.channel_layer.group_send(self.group_name, { 'type': 'send_help_request', **payload })
             return
 
+        if data.get('type') == 'watch' or data.get('type') == 'watch_stop':
+            role = await self.get_user_role()
+            if role != 'teacher':
+                return
+            teacher_id = str(self.user.id)
+            watching_key = f"watching:{self.task_id}"
+            try:
+                if data.get('type') == 'watch':
+                    target = data.get('student_id')
+                    if target is None:
+                        return
+                    await self.redis.hset(watching_key, teacher_id, str(target))
+                    await self.channel_layer.group_send(
+                        self.group_name,
+                        {
+                            "type": "teacher_watch_event",
+                            "action": "start",
+                            "teacher_id": self.user.id,
+                            "teacher_username": self.user.username,
+                            "student_id": int(target)
+                        }
+                    )
+                else:
+                    prev = await self.redis.hget(watching_key, teacher_id)
+                    await self.redis.hdel(watching_key, teacher_id)
+                    if prev is not None:
+                        await self.channel_layer.group_send(
+                            self.group_name,
+                            {
+                                "type": "teacher_watch_event",
+                                "action": "stop",
+                                "teacher_id": self.user.id,
+                                "teacher_username": self.user.username,
+                                "student_id": int(prev)
+                            }
+                        )
+            except Exception:
+                pass
+            return
+
         role = await self.get_user_role()
 
         if role == "student":
@@ -160,6 +220,16 @@ class UpdateConsumer(AsyncWebsocketConsumer):
             'username': event.get('username'),
             'note': event.get('note', ''),
             'timestamp': event.get('timestamp')
+        }
+        await self.send(text_data=json.dumps(payload))
+
+    async def teacher_watch_event(self, event):
+        payload = {
+            'type': 'teacher_watch',
+            'action': event.get('action'),
+            'teacher_id': event.get('teacher_id'),
+            'teacher_username': event.get('teacher_username'),
+            'student_id': event.get('student_id')
         }
         await self.send(text_data=json.dumps(payload))
 

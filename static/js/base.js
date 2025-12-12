@@ -151,6 +151,14 @@ export function initEditor({ csrfToken, autosaveUrl,userRole }) {
         const data = JSON.parse(event.data);
 
         if (userRole === "student") {
+            if (data.type === 'teacher_watch') {
+                if (data.action === 'start' && data.student_id == CURRENT_STUDENT_ID) {
+                    const ind = document.getElementById('teacher-watching-indicator'); if (ind) ind.style.display = 'inline-block';
+                }
+                if (data.action === 'stop' && data.student_id == CURRENT_STUDENT_ID) {
+                    const ind = document.getElementById('teacher-watching-indicator'); if (ind) ind.style.display = 'none';
+                }
+            }
             if (data.student_id !== CURRENT_STUDENT_ID) return;
             if (data.type === 'help_request') {
                 return;
@@ -204,6 +212,7 @@ export function initEditor({ csrfToken, autosaveUrl,userRole }) {
                     li.appendChild(meta);
 
                     li.addEventListener("click", () => {
+                        const prev = window.CURRENT_STUDENT_ID;
                         window.CURRENT_STUDENT_ID = student.id;
                         console.log("Teacher is now viewing student:", student.username, CURRENT_STUDENT_ID);
 
@@ -216,6 +225,13 @@ export function initEditor({ csrfToken, autosaveUrl,userRole }) {
                                 changes: { from: 0, to: editor.state.doc.length, insert: cached }
                             });
                         }
+
+                        try {
+                            if (socket && socket.readyState === WebSocket.OPEN) {
+                                if (prev) socket.send(JSON.stringify({ type: 'watch_stop', student_id: prev }));
+                                socket.send(JSON.stringify({ type: 'watch', student_id: student.id }));
+                            }
+                        } catch (e) { console.warn('watch send failed', e); }
                     });
 
                     ul.appendChild(li);
