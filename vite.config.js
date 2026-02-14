@@ -1,7 +1,7 @@
 import { defineConfig } from "vite";
 
 export default defineConfig({
-  base: "/static_build/assets/",
+  base: "/static_build/",
   publicDir: false,   // optional but recommended
   server: {
     host: true,
