@@ -1,7 +1,7 @@
 import { defineConfig } from "vite";
 
 export default defineConfig({
-  base: "/static/assets/",
+  base: "/static_build/assets/",
   publicDir: false,   // optional but recommended
   server: {
     host: true,
@@ -17,7 +17,7 @@ export default defineConfig({
     emptyOutDir: true,
     rollupOptions: {
       input: {
-        "js/editor.js": "static/js/editor.js"
+        "static/js/editor.js": "static/js/editor.js"
       }
     }
   }
