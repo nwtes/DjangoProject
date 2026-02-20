@@ -138,18 +138,27 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-
-if DEBUG:
-    DJANGO_VITE_ASSETS_PATH = os.path.join(BASE_DIR, 'static_build', '.vite')
-else:
-    DJANGO_VITE_ASSETS_PATH = os.path.join(STATIC_ROOT)
+STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 STATICFILES_DIRS = [
-    BASE_DIR / 'static',
-    BASE_DIR / 'static_build',
+    BASE_DIR / "static",
 ]
+
+DJANGO_VITE_DEV_MODE = DEBUG
+
+if DEBUG:
+    DJANGO_VITE_DEV_SERVER_HOST = "localhost"
+    DJANGO_VITE_DEV_SERVER_PORT = 5173
+else:
+    DJANGO_VITE_MANIFEST_PATH = BASE_DIR / "static_build" / ".vite" / "manifest.json"
+    DJANGO_VITE_STATIC_URL_PREFIX = "/static_build/"
+
+
+if DEBUG:
+    DJANGO_VITE_STATIC_URL_PREFIX = ""
+else:
+    DJANGO_VITE_STATIC_URL_PREFIX = "/static_build/"
 
 DJANGO_VITE_DEV_MODE = DEBUG
 
@@ -192,5 +201,5 @@ else:
             },
         },
     }
-DJANGO_VITE_MANIFEST_PATH = BASE_DIR / "static_build" / ".vite" / "manifest.json"
+#DJANGO_VITE_MANIFEST_PATH = BASE_DIR / "static_build" / ".vite" / "manifest.json"
 

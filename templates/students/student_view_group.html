@@ -2,25 +2,47 @@
 {% load static %}
 
 {% block content %}
-<div class="page-header">
-    <h1>{{ group.name }}</h1>
-    <div class="header-actions">
-
-    </div>
-</div>
-
-<div class="card" style="display:flex; gap:18px; align-items:center;">
+    <form method="get" id="groupForm">
+        <input type="hidden" id="group_id_form" name="group_id" aria-hidden="true">
+    </form>
+<div class="card group-header" style="display:flex; gap:18px; align-items:center;">
     <div style="flex:1; display:flex; gap:16px; align-items:center;">
-        <div class="avatar" style="width:72px; height:72px; border-radius:14px; font-size:22px;">{{ group.name|slice:":1"|upper }}</div>
-        <div>
-            <h2 style="margin:0 0 6px 0;">{{ group.subject }}</h2>
-            <div class="small">Teacher: {{ group.teacher}}</div>
-            <div class="small">Students: {{ students|length }}</div>
+        <div class="avatar" id="group-avatar" style="width:72px; height:72px; border-radius:14px; font-size:22px;">{{ current_group.name|slice:":1"|upper }}</div>
+        <div style="flex:1; min-width:0;">
+            <div style="display:flex; gap:12px; align-items:center;">
+                <h2 id="group-name" style="margin:0 0 6px 0; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;">{{ current_group.name }}</h2>
+
+                {% if groups %}
+                <div style="margin-left:8px; position:relative;">
+                    <button id="group-dropdown-btn" class="btn" aria-haspopup="listbox" aria-expanded="false" aria-controls="group-dropdown-list">Change group ▾</button>
+                    <ul id="group-dropdown-list" role="listbox" tabindex="-1" aria-labelledby="group-dropdown-btn" hidden
+                        style="position:absolute; right:0; top:calc(100% + 8px); min-width:220px; background:var(--panel); border:1px solid var(--border); padding:8px; border-radius:10px; list-style:none; margin:0; box-shadow:0 6px 18px rgba(3,6,23,0.6);">
+                        {% for g in groups %}
+                        <li role="option" data-id="{{ g.id }}" data-name="{{ g.name|escape }}" data-teacher="{{ g.teacher }}" data-count="{% if g.students %}{{ g.students.count }}{% else %}{{ g.student_count|default:"0" }}{% endif %}"
+                            style="padding:8px; border-radius:8px; cursor:pointer; color:var(--muted);">
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <div class="avatar" style="width:36px; height:36px; font-size:14px;">{{ g.name|slice:":1"|upper }}</div>
+                                <div style="min-width:0;">
+                                    <div style="font-weight:700; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ g.name }}</div>
+                                    <div class="small">{{ g.teacher }} • <span style="color:var(--muted)">{{ g.students.count|default:"0" }} students</span></div>
+                                </div>
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+
+            </div>
+
+            <div class="small">Teacher: <span id="group-teacher">{{ group.teacher }}</span></div>
+            <div class="small">Students: <span id="group-students-count">{{ students|length }}</span></div>
         </div>
     </div>
 
 
 </div>
+
 
 <div class="card" style="margin-top:16px;">
     <div style="display:flex; gap:8px; align-items:center; margin-bottom:12px;">
@@ -42,9 +64,9 @@
                             <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
                                 <div>
                                     <div style="font-weight:700;">{{ a.title }}</div>
-                                    <div class="small">By {{ a.author.get_full_name|default:a.author.username }} • {{ a.created_at|date:"M d, Y H:i" }}</div>
+                                    <div class="small">By {{ a.created_by}} • {{ a.created_at|date:"M d, Y H:i" }}</div>
                                 </div>
-                                <div class="small">{{ a.pinned|yesno:"Pinned," }}</div>
+                                <!--<div class="small">{{ a.pinned|yesno:"Pinned," }}</div>-->
                             </div>
 
                             <div style="margin-top:10px;">
@@ -55,8 +77,6 @@
                             </div>
 
                             <div style="margin-top:10px; display:flex; gap:8px;">
-                                <a href="{% url 'students:announcement_edit' group.id a.id %}" class="btn">Edit</a>
-                                <a href="{% url 'students:announcement_delete' group.id a.id %}" class="btn btn-ghost">Delete</a>
                             </div>
                         </article>
                     {% endfor %}
@@ -107,7 +127,6 @@
 </div>
 
 <script>
-
 (function(){
     const controls = document.querySelectorAll('#split-controls [role="tab"]');
     const panels = {
@@ -136,8 +155,54 @@
         });
     });
 
-
     activate('announcements');
+})();
+
+
+(function(){
+    const btn = document.getElementById('group-dropdown-btn');
+    if(!btn) return;
+    const list = document.getElementById('group-dropdown-list');
+    const options = Array.from(list.querySelectorAll('li'));
+    const avatar = document.getElementById('group-avatar');
+    const nameEl = document.getElementById('group-name');
+    const teacherEl = document.getElementById('group-teacher');
+    const countEl = document.getElementById('group-students-count');
+
+    function closeMenu(){
+        list.hidden = true;
+        btn.setAttribute('aria-expanded', 'false');
+    }
+    function openMenu(){
+        list.hidden = false;
+        btn.setAttribute('aria-expanded', 'true');
+        list.focus();
+    }
+
+    btn.addEventListener('click', function(e){
+        e.preventDefault();
+        if(list.hidden) openMenu(); else closeMenu();
+    });
+
+    document.addEventListener('click', function(e){
+        if(!btn.contains(e.target) && !list.contains(e.target)) closeMenu();
+    });
+
+    options.forEach(opt => {
+        opt.addEventListener('click', function(){
+            const name = this.getAttribute('data-name');
+            const teacher = this.getAttribute('data-teacher');
+            const count = this.getAttribute('data-count');
+            document.getElementById('group_id_form').value = opt.dataset.id
+            avatar.textContent = ((name||'').trim().slice(0,1).toUpperCase() || '?');
+            nameEl.textContent = name;
+            teacherEl.textContent = teacher;
+            countEl.textContent = count;
+            document.getElementById('groupForm').submit()
+            closeMenu();
+        });
+
+    });
 })();
 </script>
 

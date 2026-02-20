@@ -1,3 +1,6 @@
+from assignments.models import FinalSubmission
+
+
 def global_stats(request):
     data = {
         'user_role': None,
@@ -22,7 +25,7 @@ def global_stats(request):
             from assignments.models import Submission
 
             data['subjects_count'] = Subject.objects.filter(teacher=profile).count()
-            data['ungraded_count'] = Submission.objects.filter(task__created_by=profile, grade__isnull=True).count()
+            data['ungraded_count'] = FinalSubmission.objects.filter(submission__task__created_by=profile, submission__grade__isnull=True).count()
 
         elif profile.role == 'student':
             from classrooms.models import GroupMembership

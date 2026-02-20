@@ -1,6 +1,7 @@
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from classrooms.models import ClassGroup,Subject,GroupMembership,Announcement
-from assignments.models import Task,Submission
+from assignments.models import Task, Submission, FinalSubmission
 
 from .forms import TaskCreationForm
 from django.db.models import Count
@@ -10,6 +11,7 @@ from accounts.models import Profile
 
 def home_view(request):
     return render(request,"home.html")
+@login_required
 @role_required('student')
 def student_dashboard_view(request):
     student = request.user.profile
@@ -17,18 +19,22 @@ def student_dashboard_view(request):
     groups = [m.group for m in membership]
     tasks = Task.objects.filter(group__groupmembership__student=student)
     submission = Submission.objects.filter(student = student)
+    graded_tasks = submission.filter(grade__isnull = False)
+    assigned_tasks = submission.filter(grade__isnull = True)
     return render(request,"dashboard/student.html", {
         "groups" : groups,
-        "tasks" : tasks,
-        "submission": submission
+        "tasks" : assigned_tasks,
+        "submission": submission,
+        'graded_tasks': graded_tasks
     })
+@login_required
 @role_required('teacher')
 def teacher_dashboard_view(request):
     teacher = request.user.profile
     subject = Subject.objects.filter(teacher=teacher)
     groups = ClassGroup.objects.filter(subject__teacher=teacher)
     tasks = Task.objects.filter(created_by = teacher)
-    submissions = Submission.objects.filter(task__created_by = teacher,grade__isnull = True)
+    submissions = FinalSubmission.objects.filter(submission__task__created_by = teacher,submission__grade__isnull = True)
     subjects = Subject.objects.filter(teacher = teacher).annotate(
         group_count = Count("classgroup"),
         task_count = Count("classgroup__task")
@@ -101,17 +107,26 @@ def task_page_delete(request,task_id):
         return redirect("teacher_dashboard")
     return render(request,'home.html')
 
-def student_group_view(request,group_id):
+def student_group_view(request):
     student = request.user.profile
-    group = get_object_or_404(ClassGroup, id=group_id)
-
+    group_id = request.GET.get('group_id')
+    groups = ClassGroup.objects.filter(groupmembership__student=student)
+    if group_id:
+        current_group = get_object_or_404(ClassGroup, id=group_id)
+    else:
+        current_group = groups.first()
+        if not current_group:
+            pass
+    posts = Announcement.objects.filter(group=current_group)
     students = Profile.objects.filter(
         role='student',
-        groups__group=group
+        groups__group=current_group
     ).distinct()
     context = {
-        'group' : group,
-        'students': students
+        'current_group': current_group,
+        'groups': groups,
+        'students': students,
+        'announcements': posts
     }
     return render(request,'students/student_view_group.html',context)
 def teacher_group_view(request):
@@ -137,3 +152,25 @@ def teacher_group_view(request):
     }
     return render(request,'teacher/teacher_view_group.html',context)
 
+
+def student_group(request,group_id):
+    student = request.user.profile
+    groups = ClassGroup.objects.filter(groupmembership__student=student)
+    if group_id:
+        current_group = get_object_or_404(ClassGroup, id=group_id)
+    else:
+        current_group = groups.first()
+        if not current_group:
+            pass
+    posts = Announcement.objects.filter(group=current_group)
+    students = Profile.objects.filter(
+        role='student',
+        groups__group=current_group
+    ).distinct()
+    context = {
+        'current_group': current_group,
+        'groups': groups,
+        'students': students,
+        'announcements': posts
+    }
+    return render(request,'students/student_view_group.html',context)

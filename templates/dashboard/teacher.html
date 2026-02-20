@@ -1,10 +1,5 @@
 {% extends '_base.html' %}
 
-{% block sidebar_extra %}
-    <a class="nav-item" href="">Teacher: My classes</a>
-    <a class="nav-item" href="">Teacher: Reports</a>
-{% endblock %}
-
 {% block content %}
     <header class="page-header">
         <h1>Teacher dashboard</h1>
@@ -53,11 +48,11 @@
                 <tbody>
                     {% for sub in submissions %}
                         <tr class="ungraded">
-                            <td>{{ sub.student }}</td>
-                            <td>{{ sub.task.group }}</td>
-                            <td>{{ sub.task.title }}</td>
+                            <td>{{ sub.submission.student }}</td>
+                            <td>{{ sub.submission.task.group }}</td>
+                            <td>{{ sub.submission.task.title }}</td>
                             <td>{{ sub.submitted_at }}</td>
-                            <td><a class="grade-link" href="{% url 'submission' sub.id %}">Grade →</a></td>
+                            <td><a class="grade-link" href="{% url 'submission' sub.submission.id %}">Grade →</a></td>
                         </tr>
                     {% empty %}
                         <tr>

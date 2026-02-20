@@ -40,7 +40,12 @@
                     {% else %}
                         <a class="nav-item" href="{% url 'student_dashboard' %}">Student dashboard</a>
                     {% endif %}
-                    <a class="nav-item" href="{% url 'teacher_groups' %}">My groups</a>
+                    {% if user.profile.role == 'teacher' %}
+                        <a class="nav-item" href="{% url 'teacher_groups' %}">My groups</a>
+                    {% endif %}
+                    {% if user.profile.role == 'student' %}
+                        <a class="nav-item" href="{% url 'groups' %}">My groups</a>
+                    {% endif %}
                     {% if user.profile.role == 'teacher' %}
                         <a class="nav-item" href="{% url 'teacher_tasks' %}">My tasks
                         {% if pending_tasks_count %}

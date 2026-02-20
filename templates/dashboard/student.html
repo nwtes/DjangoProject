@@ -1,7 +1,6 @@
 {% extends '_base.html' %}
 
 {% block sidebar_extra %}
-    <a class="nav-item" href="">Progress</a>
 {% endblock %}
 
 {% block content %}
@@ -25,7 +24,7 @@
                     <p class="small">Subject: {{ g.subject.name }} • Teacher: {{ g.subject.teacher }}</p>
                     <p class="small">Joined: {{ g.joined_at|default:"—" }}</p>
                     <div style="margin-top:10px; display:flex; gap:8px;">
-                        <a class="btn btn-ghost" href="{% url 'groups' g.id %}">View group</a>
+                        <a class="btn btn-ghost" href="{% url 'group' g.id %}">View group</a>
                         <a class="btn" href="#">View tasks</a>
                     </div>
                 </div>
@@ -88,14 +87,14 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% if tasks %}
-                        {% for t in tasks %}
+                    {% if graded_tasks %}
+                        {% for graded_task in graded_tasks %}
                             <tr>
-                                <td>{{ t.title }}</td>
-                                <td>{{ t.group }}</td>
-                                <td>{{ t.created_by }}</td>
-                                <td class="small">{{ t.due_date|default:"—" }}</td>
-                                <td><a class="grade-link" href="{% url 'task' t.id %}">View results →</a></td>
+                                <td>{{ graded_task.task.title }}</td>
+                                <td>{{ graded_task.task.group }}</td>
+                                <td>{{ graded_task.task.created_by }}</td>
+                                <td class="small">{{ graded_task.task.due_date|default:"—" }}</td>
+                                <td><a class="grade-link" href="{% url 'task' graded_task.task.id %}">View results →</a></td>
                             </tr>
                         {% endfor %}
                     {% else %}
