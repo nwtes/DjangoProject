@@ -1,0 +1,70 @@
+{% extends '_base.html' %}
+
+{% block content %}
+<header class="page-header">
+    <h1>Analytics Overview</h1>
+    <div class="header-actions">
+        <a class="btn" href="{% url 'teacher_dashboard' %}">Back to Dashboard</a>
+    </div>
+</header>
+<link rel="stylesheet" href="/static/css/analytics.css">
+
+<section class="analytics-overview">
+    <div class="stat-card">
+        <h3>Total Groups</h3>
+        <p class="stat-number">{{ total_groups }}</p>
+    </div>
+    <div class="stat-card">
+        <h3>Total Students</h3>
+        <p class="stat-number">{{ total_students }}</p>
+    </div>
+    <div class="stat-card">
+        <h3>Tasks Created</h3>
+        <p class="stat-number">{{ total_tasks }}</p>
+    </div>
+    <div class="stat-card">
+        <h3>Submissions</h3>
+        <p class="stat-number">{{ total_submissions }}</p>
+    </div>
+    <div class="stat-card">
+        <h3>Avg. Grade</h3>
+        <p class="stat-number">{{ average_grade }}</p>
+    </div>
+</section>
+
+<section class="task-performance">
+    <h2 class="section-title">Task Performance</h2>
+    <table class="inbox-table">
+        <thead>
+            <tr>
+                <th>Task Title</th>
+                <th>Submissions</th>
+                <th>Graded</th>
+                <th>Completion Rate</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for task in task_analytics %}
+            <tr>
+                <td>{{ task.title }}</td>
+                <td>{{ task.submission_count }}</td>
+                <td>{{ task.graded_count }}</td>
+                <td>
+                    {% if total_students > 0 %}
+                        {% widthratio task.submission_count total_students 100 %}%
+                    {% else %}
+                        0%
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4">No tasks data available.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+
+{% endblock %}
+

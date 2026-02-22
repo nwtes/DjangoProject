@@ -1,18 +1,60 @@
 {% extends "_base.html" %}
 
 {% block content %}
-    <h1>Submission for task {{ submission.task.title }} by student {{ submission.student }} from {{ submission.task.group }}</h1>
-    <p>Task description:</p>
-    <p>{{ submission.task.description }}</p>
-    <p>Students submission:</p>
-    <p>{{ submission.content }}</p>
-    <div class="form-card card">
-    <form method="POST" class="form-row">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <div class="form-actions">
-            <button class="btn btn-primary" type="submit">Grade</button>
-        </div>
-    </form>
+<header class="page-header">
+    <h1>Grade Submission</h1>
+    <div class="header-actions">
+        <a class="btn" href="{% url 'teacher_dashboard' %}">Back to Dashboard</a>
     </div>
+</header>
+<link rel="stylesheet" href="/static/css/grading.css">
+
+<div class="grading-container">
+    <div>
+        <div class="card meta-card">
+             <h3>Task Details</h3>
+             <div class="info-row"><span class="label">Task:</span> {{ submission.task.title }}</div>
+             <div class="info-row"><span class="label">Description:</span> {{ submission.task.description }}</div>
+        </div>
+
+        <div class="submission-content">
+            <h3 style="margin-top:0;">Student's Work</h3>
+            <div class="pre-wrap">{{ submission.content }}</div>
+        </div>
+    </div>
+
+    <div>
+        <div class="card meta-card">
+            <h3>Student Info</h3>
+            <div class="info-row"><span class="label">Student:</span> {{ submission.student.display_name|default:submission.student.user.username }}</div>
+            <div class="info-row"><span class="label">Group:</span> {{ submission.task.group }}</div>
+            <div class="info-row"><span class="label">Submitted:</span> {{ submission.submitted_at|date:"M d, Y H:i" }}</div>
+        </div>
+
+        <div class="card form-card" style="width: 100%; box-sizing: border-box;">
+            <h3 style="margin-top:0; margin-bottom: 1rem;">Grade & Feedback</h3>
+            <form method="POST">
+                {% csrf_token %}
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label for="{{ form.grade.id_for_label }}">Grade (0-100)</label>
+                    {{ form.grade }}
+                    {% if form.grade.errors %}
+                        <div class="error-text">{{ form.grade.errors }}</div>
+                    {% endif %}
+                </div>
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label for="{{ form.comment.id_for_label }}">Feedback Comment</label>
+                    {{ form.comment }}
+                    {% if form.comment.errors %}
+                        <div class="error-text">{{ form.comment.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-actions">
+                    <button class="btn btn-primary btn-block" style="width:100%" type="submit">Submit Grade</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 {% endblock %}

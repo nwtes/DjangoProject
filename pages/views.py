@@ -4,7 +4,8 @@ from classrooms.models import ClassGroup,Subject,GroupMembership,Announcement
 from assignments.models import Task, Submission, FinalSubmission
 
 from .forms import TaskCreationForm
-from django.db.models import Count
+from django.db import models
+from django.db.models import Count, Avg
 from .decorators import role_required
 from accounts.models import Profile
 # Create your views here.
@@ -46,6 +47,35 @@ def teacher_dashboard_view(request):
         "subjects": subjects,
         "submissions" : submissions
     })
+
+@role_required('teacher')
+def teacher_analytics_view(request):
+    teacher = request.user.profile
+
+    # Context data for analytics
+    groups = ClassGroup.objects.filter(subject__teacher=teacher)
+    tasks = Task.objects.filter(created_by=teacher)
+    submissions = Submission.objects.filter(task__created_by=teacher)
+
+    total_students = GroupMembership.objects.filter(group__in=groups).count()
+    avg_grade = submissions.filter(grade__isnull=False).aggregate(Avg('grade'))['grade__avg']
+
+    # Tasks with submission counts
+    task_analytics = tasks.annotate(
+        submission_count=Count('submission', filter=models.Q(submission__submitted=True)),
+        graded_count=Count('submission', filter=models.Q(submission__grade__isnull=False))
+    )
+
+    context = {
+        "total_groups": groups.count(),
+        "total_tasks": tasks.count(),
+        "total_students": total_students,
+        "total_submissions": submissions.filter(submitted=True).count(),
+        "average_grade": round(avg_grade, 2) if avg_grade else 0,
+        "task_analytics": task_analytics
+    }
+    return render(request, "dashboard/analytics.html", context)
+
 @role_required('teacher')
 def create_task(request):
     teacher = request.user.profile
