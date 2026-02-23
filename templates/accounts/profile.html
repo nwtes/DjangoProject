@@ -1,37 +1,85 @@
 {% extends '_base.html' %}
+{% load static %}
 
 {% block content %}
-<div class="form-card card">
-    <div style="display:flex;gap:12px;align-items:center;">
-        <div class="avatar" style="width:72px;height:72px;border-radius:12px;font-size:24px;display:inline-flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.02);">
-            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                <path d="M12 12c2.761 0 5-2.239 5-5s-2.239-5-5-5-5 2.239-5 5 2.239 5 5 5z" fill="currentColor" opacity="0.9"></path>
-                <path d="M2 20c0-3.866 3.582-7 10-7s10 3.134 10 7v1H2v-1z" fill="currentColor" opacity="0.6"></path>
-            </svg>
-        </div>
-        <div>
-            <h2 style="margin:0">{{ profile.display_name|default:profile.user.username }}</h2>
-            <div class="small">{{ profile.role|capfirst }}</div>
-        </div>
-        <div style="margin-left:auto">
-            <a class="btn" href="{% url 'edit_profile' %}">Edit profile</a>
-        </div>
+<div class="page-header">
+    <div style="flex:1;">
+        <h1>Your Profile</h1>
+        <p class="small">{{ profile.user.email }}</p>
     </div>
+    <div class="header-actions">
+        <a href="{% url 'edit_profile' %}" class="btn btn-primary">Edit Profile</a>
+        {% if profile.role == 'student' %}
+        <a href="{% url 'student_dashboard' %}" class="btn btn-ghost">Dashboard</a>
+        {% else %}
+        <a href="{% url 'teacher_dashboard' %}" class="btn btn-ghost">Dashboard</a>
+        {% endif %}
+    </div>
+</div>
 
-    <div style="margin-top:12px;">
-        <div class="small">Bio</div>
-        <div>{{ profile.bio|linebreaksbr|default:"No bio yet." }}</div>
-    </div>
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; margin-top:20px;">
+    <section>
+        <div class="card" style="padding: 2rem; display: flex; align-items: flex-start; gap: 1.5rem;">
+            <div style="width: 80px; height: 80px; background-color: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: bold; color: white;">
+                {{ profile.display_name|default:profile.user.username|first|upper }}
+            </div>
+            <div>
+                <h2 style="margin-top: 0;">{{ profile.display_name|default:profile.user.username }}</h2>
+                <span class="badge" style="background:var(--glass); color:white;">{{ profile.role|title }}</span>
+                {% if profile.bio %}
+                    <p style="margin-top: 1rem; color: var(--muted);">{{ profile.bio }}</p>
+                {% else %}
+                    <p style="margin-top: 1rem; color: var(--muted); font-style: italic;">No bio added yet.</p>
+                {% endif %}
+            </div>
+        </div>
 
-    <div style="margin-top:12px;display:flex;gap:12px;">
-        <div>
-            <div class="small">Email</div>
-            <div>{{ profile.user.email }}</div>
+        <div class="card" style="margin-top: 1.5rem;">
+            <h3>Contact Info</h3>
+            <ul style="list-style: none; padding: 0; margin-top: 1rem;">
+                <li style="margin-bottom: 0.5rem;">
+                    <strong>Email:</strong> {{ profile.user.email }}
+                </li>
+                {% if profile.phone %}
+                <li style="margin-bottom: 0.5rem;">
+                    <strong>Phone:</strong> {{ profile.phone }}
+                </li>
+                {% endif %}
+                <li>
+                    <strong>Joined:</strong> {{ profile.user.date_joined|date:"F j, Y" }}
+                </li>
+            </ul>
         </div>
-        <div>
-            <div class="small">Phone</div>
-            <div>{{ profile.phone|default:"—" }}</div>
+    </section>
+    <aside>
+        <div class="card">
+            <h3>Activity Stats</h3>
+            <div style="margin-top: 1rem;">
+                {% if profile.role == 'student' %}
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                        <span>Groups Joined</span>
+                        <strong>{{ stats.groups_joined|default:"0" }}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Assignments Done</span>
+                        <strong>{{ stats.assignments_completed|default:"0" }}</strong>
+                    </div>
+                {% elif profile.role == 'teacher' %}
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                        <span>Subjects Taught</span>
+                        <strong>{{ stats.subjects_taught|default:"0" }}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                        <span>Tasks Created</span>
+                        <strong>{{ stats.tasks_created|default:"0" }}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Total Students</span>
+                        <strong>{{ stats.total_students|default:"0" }}</strong>
+                    </div>
+                {% endif %}
+            </div>
         </div>
-    </div>
+    </aside>
 </div>
 {% endblock %}

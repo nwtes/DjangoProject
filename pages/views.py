@@ -22,10 +22,13 @@ def student_dashboard_view(request):
     submission = Submission.objects.filter(student = student)
     graded_tasks = submission.filter(grade__isnull = False)
     assigned_tasks = submission.filter(grade__isnull = True)
+    graded_task_ids = graded_tasks.values_list('task_id', flat=True)
+    assigned_tasks = tasks.exclude(id__in=graded_task_ids)
+
     return render(request,"dashboard/student.html", {
         "groups" : groups,
         "tasks" : assigned_tasks,
-        "submission": submission,
+        "submissions": submission,
         'graded_tasks': graded_tasks
     })
 @login_required
@@ -33,7 +36,10 @@ def student_dashboard_view(request):
 def teacher_dashboard_view(request):
     teacher = request.user.profile
     subject = Subject.objects.filter(teacher=teacher)
-    groups = ClassGroup.objects.filter(subject__teacher=teacher)
+    groups = ClassGroup.objects.filter(subject__teacher=teacher).annotate(
+        student_count = Count("groupmembership", distinct=True),
+        task_count = Count("task", distinct=True)
+    )
     tasks = Task.objects.filter(created_by = teacher)
     submissions = FinalSubmission.objects.filter(submission__task__created_by = teacher,submission__grade__isnull = True)
     subjects = Subject.objects.filter(teacher = teacher).annotate(
@@ -83,6 +89,9 @@ def create_task(request):
     if request.GET.get("subject"):
         subject = request.GET.get("subject")
         allowed_groups = ClassGroup.objects.filter(subject = subject,subject__teacher=teacher)
+    elif request.GET.get("group"):
+        group = request.GET.get("group")
+        allowed_groups = ClassGroup.objects.filter(id = group, subject__teacher=teacher)
     else:
         allowed_groups = ClassGroup.objects.filter(subject__teacher=teacher)
 
@@ -98,7 +107,10 @@ def create_task(request):
             return redirect("teacher_dashboard")
 
     else:
-        form = TaskCreationForm()
+        if request.GET.get("group"):
+             form = TaskCreationForm(initial={'group': request.GET.get("group")})
+        else:
+             form = TaskCreationForm()
         form.fields['group'].queryset = allowed_groups
     return render(request,"tasks/create_task.html",{"form" : form})
 

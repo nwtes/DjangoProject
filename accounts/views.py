@@ -3,6 +3,9 @@ from django.contrib.auth import login
 from .forms import UserRegistrationForm, ProfileForm
 from django.contrib.auth.views import LoginView
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
+from assignments.models import Task,Submission
+from classrooms.models import ClassGroup,GroupMembership,Subject
 
 # Create your views here.
 def register(request):
@@ -40,7 +43,22 @@ class RoleBasedLoginView(LoginView):
 @login_required
 def profile_view(request):
     profile = request.user.profile
-    return render(request, 'accounts/profile.html', {'profile': profile})
+    stats = {}
+
+    if profile.role == 'student':
+        stats['groups_joined'] = GroupMembership.objects.filter(student=profile).count()
+        stats['assignments_completed'] = Submission.objects.filter(student=profile, submitted=True).count()
+
+    elif profile.role == 'teacher':
+        stats['subjects_taught'] = Subject.objects.filter(teacher=profile).count()
+        stats['total_students'] = GroupMembership.objects.filter(group__subject__teacher=profile).values('student').distinct().count()
+        stats['tasks_created'] = Task.objects.filter(created_by=profile).count()
+
+    context = {
+        'profile': profile,
+        'stats': stats
+    }
+    return render(request, 'accounts/profile.html', context)
 
 @login_required
 def edit_profile(request):

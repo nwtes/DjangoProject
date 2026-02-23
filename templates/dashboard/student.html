@@ -25,7 +25,7 @@
                     <p class="small">Joined: {{ g.joined_at|default:"—" }}</p>
                     <div style="margin-top:10px; display:flex; gap:8px;">
                         <a class="btn btn-ghost" href="{% url 'group' g.id %}">View group</a>
-                        <a class="btn" href="#">View tasks</a>
+                        <a class="btn" href="{% url 'student_tasks' %}?group={{ g.id }}">View tasks</a>
                     </div>
                 </div>
             {% endfor %}
@@ -66,11 +66,13 @@
                             <td colspan="5">No assigned tasks. Check back later.</td>
                         </tr>
                     {% endif %}
+                    <tr>
+                        <td colspan="5" style="text-align: center;">
+                            <a href="{% url 'student_tasks' %}?graded=ungraded" class="view-all">View All Tasks</a>
+                        </td>
+                    </tr>
                 </tbody>
             </table>
-            <div class="inbox-footer">
-                <a href="{% url 'student_dashboard' %}" class="view-all">View All Tasks</a>
-            </div>
         </div>
     </section>
     <section class="submissions-section" style="margin-top:14px;">
@@ -93,20 +95,22 @@
                                 <td>{{ graded_task.task.title }}</td>
                                 <td>{{ graded_task.task.group }}</td>
                                 <td>{{ graded_task.task.created_by }}</td>
-                                <td class="small">{{ graded_task.task.due_date|default:"—" }}</td>
-                                <td><a class="grade-link" href="{% url 'task' graded_task.task.id %}">View results →</a></td>
+                                <td class="small">{{ graded_task.grade|default:"—" }}</td>
+                                <td><a class="grade-link" href="{% url 'student_submission' graded_task.id %}">View results →</a></td>
                             </tr>
                         {% endfor %}
                     {% else %}
                         <tr>
-                            <td colspan="5">No assigned tasks. Check back later.</td>
+                            <td colspan="5">No graded tasks yet.</td>
                         </tr>
                     {% endif %}
+                    <tr>
+                        <td colspan="5" style="text-align: center;">
+                            <a href="{% url 'student_tasks' %}?graded=graded" class="view-all">View All Graded Tasks</a>
+                        </td>
+                    </tr>
                 </tbody>
             </table>
-            <div class="inbox-footer">
-                <a href="{% url 'student_dashboard' %}" class="view-all">View All Graded Tasks</a>
-            </div>
         </div>
     </section>
 

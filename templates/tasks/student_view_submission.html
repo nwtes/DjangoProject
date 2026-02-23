@@ -1,12 +1,54 @@
-{% extends '_base.html' %}
-
+{% extends "_base.html" %}
 
 {% block content %}
+<header class="page-header">
+    <h1>Task Review</h1>
+    <div class="header-actions">
+        <a class="btn" href="{% url 'student_dashboard' %}">Back to Dashboard</a>
+    </div>
+</header>
+<link rel="stylesheet" href="/static/css/grading.css">
 
-    <h2>Your submission for task {{ submission.task.title }}</h2>
-    <p>{{ submission.content }}</p>
-    <h3>Teacher's grade : </h3>
-    {{ submission.grade }}
-    <h3>Teacher's comment :</h3>
-    {{ submission.comment }}
+<div class="grading-container">
+    <div>
+        <div class="card meta-card">
+             <h3>Task Details</h3>
+             <div class="info-row"><span class="label">Task:</span> {{ submission.task.title }}</div>
+             <div class="info-row"><span class="label">Description:</span> {{ submission.task.description }}</div>
+        </div>
+
+        <div class="submission-content">
+            <h3 style="margin-top:0;">Student's Work</h3>
+            <div class="pre-wrap">{{ submission.content }}</div>
+        </div>
+    </div>
+
+    <div>
+        <div class="card meta-card">
+            <h3>Student Info</h3>
+            <div class="info-row"><span class="label">Student:</span> {{ submission.student.display_name|default:submission.student.user.username }}</div>
+            <div class="info-row"><span class="label">Group:</span> {{ submission.task.group }}</div>
+            <div class="info-row"><span class="label">Submitted:</span> {{ submission.submitted_at|date:"M d, Y H:i" }}</div>
+        </div>
+
+        <div class="card form-card" style="width: 100%; box-sizing: border-box;">
+            <h3 style="margin-top:0; margin-bottom: 1rem;">Grade & Feedback</h3>
+            <form method="POST">
+                {% csrf_token %}
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <p>Your grade: {{ submission.grade }}</p>
+                </div>
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label>Feedback Comment</label>
+                    <div>
+                        <p>
+                            {{ submission.comment }}
+                        </p>
+                    </div>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
 {% endblock %}

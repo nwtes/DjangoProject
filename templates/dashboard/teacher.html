@@ -10,24 +10,24 @@
     </header>
 
     <section class="subjects-section">
-        <h2 class="section-title">Subjects</h2>
+        <h2 class="section-title">Groups</h2>
         <div class="subject-grid">
-            {% for sub in subjects %}
+            {% for group in groups %}
                 <article class="subject-card">
                     <div class="subject-top">
-                        <h3 class="subject-name">{{ sub.name }}</h3>
+                        <h3 class="subject-name">{{ group.name }}</h3>
                         <div class="subject-stats">
-                            <span class="stat">Groups: <strong>{{ sub.group_count }}</strong></span>
-                            <span class="stat">Tasks: <strong>{{ sub.task_count }}</strong></span>
+                            <span class="stat">Students: <strong>{{ group.student_count }}</strong></span>
+                            <span class="stat">Tasks: <strong>{{ group.task_count }}</strong></span>
                         </div>
                     </div>
                     <div class="subject-actions">
-                        <a class="btn btn-ghost" href="">View Subject</a>
-                        <a class="btn btn-accent" href="{% url 'create_task' %}?subject={{ sub.id }}">Create task</a>
+                        <a class="btn btn-ghost" href="{% url 'teacher_groups' %}?group_id={{ group.id }}">View Group</a>
+                        <a class="btn btn-accent" href="{% url 'create_task' %}?group={{ group.id }}">Create task</a>
                     </div>
                 </article>
             {% empty %}
-                <p>No subjects yet.</p>
+                <p>No groups yet.</p>
             {% endfor %}
         </div>
     </section>
