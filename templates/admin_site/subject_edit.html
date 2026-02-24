@@ -1,0 +1,47 @@
+{% extends 'admin_site/_admin_base.html' %}
+{% block nav_subjects %}active{% endblock %}
+
+{% block content %}
+<header class="page-header">
+    <h1>Edit Subject: {{ subject.name }}</h1>
+    <a class="btn btn-ghost" href="{% url 'admin_subjects' %}">← Back</a>
+</header>
+
+<div class="admin-form-card">
+    <form method="POST">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="update">
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Subject Name</label>
+                <input type="text" name="name" value="{{ subject.name }}" class="form-input" required>
+            </div>
+            <div class="form-group">
+                <label>Assign Teacher</label>
+                <select name="teacher_id" class="form-input">
+                    <option value="">— No teacher —</option>
+                    {% for teacher in teachers %}
+                    <option value="{{ teacher.id }}" {% if subject.teacher and subject.teacher.id == teacher.id %}selected{% endif %}>
+                        {{ teacher.user.username }}{% if teacher.display_name %} ({{ teacher.display_name }}){% endif %}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+            <a class="btn btn-ghost" href="{% url 'admin_subjects' %}">Cancel</a>
+        </div>
+    </form>
+
+    <div class="danger-zone">
+        <h3>Danger Zone</h3>
+        <p>Deleting this subject will also delete all its groups and tasks.</p>
+        <form method="POST" onsubmit="return confirm('Delete this subject and all its groups?')">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="delete">
+            <button type="submit" class="btn btn-danger">Delete Subject</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

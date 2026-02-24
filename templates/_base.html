@@ -70,6 +70,9 @@
                         {% endif %}
                     </a>
                     {% endif %}
+                    {% if user.is_superuser %}
+                        <a class="nav-item" href="{% url 'admin_dashboard' %}">⚙ Site Admin</a>
+                    {% endif %}
                     <form action="{% url 'logout' %}" method="POST">
                         {% csrf_token %}
                         <button type="submit" class="nav-item logout">Logout

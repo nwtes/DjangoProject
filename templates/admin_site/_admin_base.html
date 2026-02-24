@@ -1,0 +1,69 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+    <link rel="stylesheet" href="{% static 'css/admin_site.css' %}">
+    <link rel="stylesheet" href="{% static 'css/responsive.css' %}">
+    <title>Site Admin</title>
+</head>
+<body>
+    <button class="mobile-nav-toggle" id="mobileNavToggle" aria-label="Toggle Navigation">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+    </button>
+    <div class="mobile-sidebar-overlay" id="mobileSidebarOverlay"></div>
+
+    <div class="dashboard-container">
+        <aside class="sidebar" id="sidebar">
+            <button class="mobile-nav-close" id="mobileNavClose" aria-label="Close Navigation">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+            <div class="profile">
+                <div class="avatar admin-avatar">{{ user.username|slice:":1"|upper }}</div>
+                <div class="profile-info">
+                    <div class="username">{{ user.username }}</div>
+                    <span class="admin-badge">Superuser</span>
+                </div>
+            </div>
+            <nav class="nav-links">
+                <a class="nav-item {% block nav_dashboard %}{% endblock %}" href="{% url 'admin_dashboard' %}">Dashboard</a>
+                <a class="nav-item {% block nav_users %}{% endblock %}" href="{% url 'admin_users' %}">Users</a>
+                <a class="nav-item {% block nav_subjects %}{% endblock %}" href="{% url 'admin_subjects' %}">Subjects</a>
+                <a class="nav-item {% block nav_groups %}{% endblock %}" href="{% url 'admin_groups' %}">Groups</a>
+                <div class="nav-divider"></div>
+                <a class="nav-item" href="{% url 'home' %}">← Back to Site</a>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <div class="content">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const navToggle = document.getElementById('mobileNavToggle');
+        const navClose = document.getElementById('mobileNavClose');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('mobileSidebarOverlay');
+        if (navToggle && sidebar && overlay) {
+            navToggle.addEventListener('click', () => {
+                sidebar.classList.add('active');
+                overlay.classList.add('active');
+                navToggle.classList.add('hidden');
+            });
+            const closeSidebar = () => {
+                sidebar.classList.remove('active');
+                overlay.classList.remove('active');
+                navToggle.classList.remove('hidden');
+            };
+            overlay.addEventListener('click', closeSidebar);
+            if (navClose) navClose.addEventListener('click', closeSidebar);
+        }
+    </script>
+</body>
+</html>
+

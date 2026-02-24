@@ -1,0 +1,93 @@
+{% extends 'admin_site/_admin_base.html' %}
+{% block nav_dashboard %}active{% endblock %}
+
+{% block content %}
+<header class="page-header">
+    <h1>Site Administration</h1>
+</header>
+
+<div class="admin-stats-grid">
+    <div class="admin-stat-card">
+        <div class="stat-body">
+            <div class="stat-number">{{ total_users }}</div>
+            <div class="stat-label">Total Users</div>
+        </div>
+    </div>
+    <div class="admin-stat-card">
+        <div class="stat-body">
+            <div class="stat-number">{{ total_teachers }}</div>
+            <div class="stat-label">Teachers</div>
+        </div>
+    </div>
+    <div class="admin-stat-card">
+        <div class="stat-body">
+            <div class="stat-number">{{ total_students }}</div>
+            <div class="stat-label">Students</div>
+        </div>
+    </div>
+    <div class="admin-stat-card">
+        <div class="stat-body">
+            <div class="stat-number">{{ total_subjects }}</div>
+            <div class="stat-label">Subjects</div>
+        </div>
+    </div>
+    <div class="admin-stat-card">
+        <div class="stat-body">
+            <div class="stat-number">{{ total_groups }}</div>
+            <div class="stat-label">Groups</div>
+        </div>
+    </div>
+    <div class="admin-stat-card">
+        <div class="stat-body">
+            <div class="stat-number">{{ total_tasks }}</div>
+            <div class="stat-label">Tasks</div>
+        </div>
+    </div>
+    <div class="admin-stat-card">
+        <div class="stat-body">
+            <div class="stat-number">{{ total_submissions }}</div>
+            <div class="stat-label">Submissions</div>
+        </div>
+    </div>
+</div>
+
+<section class="submissions-section">
+    <div class="section-header">
+        <h2 class="section-title">Recent Users</h2>
+        <a class="btn btn-ghost" href="{% url 'admin_users' %}">View all</a>
+    </div>
+    <div class="inbox-container">
+        <table class="inbox-table">
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Joined</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in recent_users %}
+                <tr>
+                    <td>{{ u.username }}</td>
+                    <td>{{ u.email|default:"—" }}</td>
+                    <td><span class="role-badge role-{{ u.profile.role }}">{{ u.profile.role }}</span></td>
+                    <td>{{ u.date_joined|date:"d M Y" }}</td>
+                    <td><a class="grade-link" href="{% url 'admin_user_edit' u.id %}">Edit →</a></td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5">No users found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<div class="admin-quick-links">
+    <a class="admin-quick-card" href="{% url 'admin_subjects' %}">Manage Subjects</a>
+    <a class="admin-quick-card" href="{% url 'admin_groups' %}">Manage Groups</a>
+    <a class="admin-quick-card" href="{% url 'admin_users' %}?role=teacher">View Teachers</a>
+    <a class="admin-quick-card" href="{% url 'admin_users' %}?role=student">View Students</a>
+</div>
+{% endblock %}
