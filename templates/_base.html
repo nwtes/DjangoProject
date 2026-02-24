@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="{% static 'css/base.css' %}">
     <link rel="stylesheet" href="{% static 'css/forms.css' %}">
     <link rel="stylesheet" href="{% static 'css/responsive.css' %}">
+    <link rel="stylesheet" href="{% static 'css/dm.css' %}">
 
 
 
@@ -71,8 +72,9 @@
                     </a>
                     {% endif %}
                     {% if user.is_superuser %}
-                        <a class="nav-item" href="{% url 'admin_dashboard' %}">⚙ Site Admin</a>
+                        <a class="nav-item" href="{% url 'admin_dashboard' %}">Site Admin</a>
                     {% endif %}
+                    <a class="nav-item" href="{% url 'dm_inbox' %}">Messages{% if unread_dm_count %}<span class="badge badge-alert">{{ unread_dm_count }}</span>{% endif %}</a>
                     <form action="{% url 'logout' %}" method="POST">
                         {% csrf_token %}
                         <button type="submit" class="nav-item logout">Logout

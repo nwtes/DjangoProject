@@ -1,0 +1,248 @@
+.dm-conversation-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    text-decoration: none;
+    color: #e6eef8;
+    transition: background 0.15s;
+}
+
+.dm-conversation-row:last-child {
+    border-bottom: none;
+}
+
+.dm-conversation-row:hover {
+    background: rgba(255,255,255,0.02);
+}
+
+.dm-conversation-row.dm-unread {
+    border-left: 3px solid var(--accent);
+}
+
+.dm-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--accent), #4f46e5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: #fff;
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.dm-row-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.dm-row-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+
+.dm-username {
+    font-weight: 700;
+    color: #fff;
+    font-size: 14px;
+}
+
+.dm-time {
+    font-size: 12px;
+    color: var(--muted);
+    flex-shrink: 0;
+}
+
+.dm-row-preview {
+    font-size: 13px;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 3px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.dm-unread-badge {
+    background: var(--accent);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 1px 7px;
+    border-radius: 999px;
+    flex-shrink: 0;
+}
+
+.dm-empty {
+    padding: 32px;
+    text-align: center;
+    color: var(--muted);
+}
+
+.dm-conv-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex: 1;
+}
+
+.dm-conv-name {
+    font-weight: 700;
+    font-size: 16px;
+    color: #fff;
+}
+
+.dm-conn-status {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.dm-conn-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--muted);
+    flex-shrink: 0;
+    transition: background 0.3s;
+}
+
+.dm-conn-dot.dm-conn-online {
+    background: var(--accent-2);
+    box-shadow: 0 0 5px rgba(57,209,162,0.5);
+}
+
+.dm-conn-dot.dm-conn-offline {
+    background: #ef4444;
+}
+
+.dm-conn-dot.dm-conn-connecting {
+    background: #f59e0b;
+}
+
+.dm-window {
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-top: 16px;
+    height: calc(100vh - 200px);
+    min-height: 400px;
+}
+
+.dm-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.dm-messages::-webkit-scrollbar {
+    width: 4px;
+}
+
+.dm-messages::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.08);
+    border-radius: 4px;
+}
+
+.dm-msg {
+    display: flex;
+    flex-direction: column;
+    max-width: 68%;
+}
+
+.dm-msg-me {
+    align-self: flex-end;
+    align-items: flex-end;
+}
+
+.dm-msg-them {
+    align-self: flex-start;
+    align-items: flex-start;
+}
+
+.dm-msg-bubble {
+    padding: 10px 14px;
+    border-radius: 14px;
+    font-size: 14px;
+    line-height: 1.5;
+    word-break: break-word;
+    white-space: pre-wrap;
+}
+
+.dm-msg-me .dm-msg-bubble {
+    background: linear-gradient(135deg, var(--accent), #5b21b6);
+    color: #fff;
+    border-bottom-right-radius: 4px;
+}
+
+.dm-msg-them .dm-msg-bubble {
+    background: rgba(255,255,255,0.06);
+    color: #e6eef8;
+    border-bottom-left-radius: 4px;
+}
+
+.dm-msg-meta {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 3px;
+    padding: 0 2px;
+}
+
+.dm-input-row {
+    display: flex;
+    gap: 10px;
+    padding: 14px 16px;
+    border-top: 1px solid var(--border);
+    background: rgba(255,255,255,0.01);
+}
+
+.dm-input {
+    flex: 1;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: #e6eef8;
+    padding: 10px 14px;
+    font-size: 14px;
+    outline: none;
+    font-family: inherit;
+    transition: border-color 0.2s;
+}
+
+.dm-input:focus {
+    border-color: var(--accent);
+    background: rgba(124,92,255,0.04);
+}
+
+.dm-input:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+    .dm-msg {
+        max-width: 88%;
+    }
+
+    .dm-window {
+        height: calc(100vh - 160px);
+    }
+}
+

@@ -8,4 +8,6 @@ urlpatterns = [
     path("login/",views.RoleBasedLoginView.as_view(),name="login"),
     path("profile/", views.profile_view, name='profile'),
     path("profile/edit/", views.edit_profile, name='edit_profile'),
+    path("profile/<int:user_id>/", views.user_profile_view, name='user_profile'),
 ]
+

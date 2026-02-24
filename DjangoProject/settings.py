@@ -173,7 +173,7 @@ else:
 
 
 
-redis_url = urllib.parse.urlparse(os.environ['REDIS_URL'])
+redis_url = urllib.parse.urlparse(os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379/0'))
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 ASGI_APPLICATION = 'DjangoProject.asgi.application'
 

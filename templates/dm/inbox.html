@@ -1,0 +1,42 @@
+{% extends '_base.html' %}
+{% load static %}
+
+{% block content %}
+<header class="page-header">
+    <h1>Messages</h1>
+</header>
+
+<div class="inbox-container">
+    {% if conversations %}
+        {% for conv in conversations %}
+        <a class="dm-conversation-row {% if conv.unread %}dm-unread{% endif %}" href="{% url 'dm_conversation' conv.partner.id %}">
+            <div class="dm-avatar">{{ conv.partner.username|slice:":1"|upper }}</div>
+            <div class="dm-row-body">
+                <div class="dm-row-top">
+                    <span class="dm-username">{{ conv.partner.username }}</span>
+                    {% if conv.last_msg %}
+                        <span class="dm-time">{{ conv.last_msg.sent_at|date:"d M, H:i" }}</span>
+                    {% endif %}
+                </div>
+                <div class="dm-row-preview">
+                    {% if conv.last_msg %}
+                        {% if conv.last_msg.sender == request.user %}You: {% endif %}{{ conv.last_msg.body|truncatechars:60 }}
+                    {% else %}
+                        No messages yet
+                    {% endif %}
+                    {% if conv.unread %}
+                        <span class="dm-unread-badge">{{ conv.unread }}</span>
+                    {% endif %}
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    {% else %}
+        <div class="dm-empty">
+            <p>No conversations yet.</p>
+            <p class="small">You can start a chat from any user's profile page.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+

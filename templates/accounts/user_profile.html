@@ -1,0 +1,72 @@
+{% extends '_base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="page-header">
+    <div style="flex:1;">
+        <h1>{{ profile.display_name|default:profile.user.username }}</h1>
+        <p class="small">{{ profile.role|title }}</p>
+    </div>
+    <div class="header-actions">
+        <a href="{% url 'dm_conversation' target_user.id %}" class="btn btn-primary">Message</a>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; margin-top: 20px;">
+    <section>
+        <div class="card" style="padding: 2rem; display: flex; align-items: flex-start; gap: 1.5rem;">
+            <div style="width: 80px; height: 80px; background: linear-gradient(135deg, var(--accent), #4f46e5); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: bold; color: white;">
+                {{ profile.display_name|default:profile.user.username|first|upper }}
+            </div>
+            <div>
+                <h2 style="margin-top: 0;">{{ profile.display_name|default:profile.user.username }}</h2>
+                <span class="badge" style="background: var(--glass); color: white;">{{ profile.role|title }}</span>
+                {% if profile.bio %}
+                    <p style="margin-top: 1rem; color: var(--muted);">{{ profile.bio }}</p>
+                {% else %}
+                    <p style="margin-top: 1rem; color: var(--muted); font-style: italic;">No bio added.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card" style="margin-top: 1.5rem;">
+            <h3>Contact Info</h3>
+            <ul style="list-style: none; padding: 0; margin-top: 1rem;">
+                <li style="margin-bottom: 0.5rem;"><strong>Username:</strong> {{ profile.user.username }}</li>
+                {% if profile.user.email %}
+                <li style="margin-bottom: 0.5rem;"><strong>Email:</strong> {{ profile.user.email }}</li>
+                {% endif %}
+                <li><strong>Joined:</strong> {{ profile.user.date_joined|date:"F j, Y" }}</li>
+            </ul>
+        </div>
+    </section>
+
+    <aside>
+        <div class="card">
+            <h3>Stats</h3>
+            <div style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.75rem;">
+                {% if profile.role == 'student' %}
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: var(--muted);">Groups Joined</span>
+                        <strong>{{ stats.groups_joined|default:"0" }}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: var(--muted);">Assignments Done</span>
+                        <strong>{{ stats.assignments_completed|default:"0" }}</strong>
+                    </div>
+                {% elif profile.role == 'teacher' %}
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: var(--muted);">Subjects</span>
+                        <strong>{{ stats.subjects_taught|default:"0" }}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: var(--muted);">Tasks Created</span>
+                        <strong>{{ stats.tasks_created|default:"0" }}</strong>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </aside>
+</div>
+{% endblock %}
+

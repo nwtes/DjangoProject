@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login
 from .forms import UserRegistrationForm, ProfileForm
 from django.contrib.auth.views import LoginView
@@ -71,3 +71,21 @@ def edit_profile(request):
     else:
         form = ProfileForm(instance=profile)
     return render(request, 'accounts/edit_profile.html', {'form': form})
+
+
+@login_required
+def user_profile_view(request, user_id):
+    target_user = get_object_or_404(User, id=user_id)
+    if target_user == request.user:
+        return redirect('profile')
+    profile = target_user.profile
+    stats = {}
+    if profile.role == 'student':
+        stats['groups_joined'] = GroupMembership.objects.filter(student=profile).count()
+        stats['assignments_completed'] = Submission.objects.filter(student=profile, submitted=True).count()
+    elif profile.role == 'teacher':
+        stats['subjects_taught'] = Subject.objects.filter(teacher=profile).count()
+        stats['tasks_created'] = Task.objects.filter(created_by=profile).count()
+    context = {'profile': profile, 'stats': stats, 'target_user': target_user}
+    return render(request, 'accounts/user_profile.html', context)
+

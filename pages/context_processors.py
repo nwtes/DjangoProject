@@ -7,6 +7,7 @@ def global_stats(request):
         'subjects_count': 0,
         'ungraded_count': 0,
         'pending_tasks_count': 0,
+        'unread_dm_count': 0,
     }
 
     user = getattr(request, 'user', None)
@@ -18,6 +19,12 @@ def global_stats(request):
         return data
 
     data['user_role'] = profile.role
+
+    try:
+        from editor.models import DirectMessage
+        data['unread_dm_count'] = DirectMessage.objects.filter(recipient=user, read=False).count()
+    except Exception:
+        pass
 
     try:
         if profile.role == 'teacher':

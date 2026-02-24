@@ -16,13 +16,16 @@ class UpdateConsumer(AsyncWebsocketConsumer):
         self.task_id = self.scope["url_route"]["kwargs"]["task_id"]
         self.group_name = f"task_{self.task_id}"
 
-        if settings.DEBUG:
-            self.redis = aioredis.from_url(REDIS_URL, decode_responses=True)
-        else:
-            self.redis = aioredis.from_url(f"{REDIS_URL}?ssl_cert_reqs=none", decode_responses=True)
-
         await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.accept()
+
+        try:
+            if settings.DEBUG:
+                self.redis = aioredis.from_url(REDIS_URL, decode_responses=True)
+            else:
+                self.redis = aioredis.from_url(f"{REDIS_URL}?ssl_cert_reqs=none", decode_responses=True)
+        except Exception:
+            self.redis = None
 
         if await self.get_user_role() == "student":
             await self.add_student()
@@ -52,6 +55,12 @@ class UpdateConsumer(AsyncWebsocketConsumer):
                     )
             except Exception:
                 pass
+
+        try:
+            if self.redis:
+                await self.redis.aclose()
+        except Exception:
+            pass
 
         await self.channel_layer.group_discard(self.group_name, self.channel_name)
 
@@ -252,3 +261,72 @@ class UpdateConsumer(AsyncWebsocketConsumer):
         )
         doc.content = content
         doc.save()
+
+
+class DMConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        self.user = self.scope["user"]
+        if not self.user.is_authenticated:
+            await self.close()
+            return
+        self.other_id = int(self.scope["url_route"]["kwargs"]["user_id"])
+        ids = sorted([self.user.id, self.other_id])
+        self.room = f"dm_{ids[0]}_{ids[1]}"
+        await self.channel_layer.group_add(self.room, self.channel_name)
+        await self.accept()
+        await self.mark_read()
+
+    async def disconnect(self, close_code):
+        await self.channel_layer.group_discard(self.room, self.channel_name)
+
+    async def receive(self, text_data=None, bytes_data=None):
+        if not text_data or len(text_data) > 4000:
+            return
+        try:
+            data = json.loads(text_data)
+        except Exception:
+            return
+        body = (data.get("body") or "").strip()
+        if not body:
+            return
+        msg = await self.save_message(body)
+        await self.channel_layer.group_send(
+            self.room,
+            {
+                "type": "dm_message",
+                "id": msg.id,
+                "sender_id": self.user.id,
+                "sender_username": self.user.username,
+                "body": body,
+                "sent_at": msg.sent_at.strftime("%d %b %Y, %H:%M"),
+            }
+        )
+
+    async def dm_message(self, event):
+        await self.send(text_data=json.dumps({
+            "type": "dm_message",
+            "id": event["id"],
+            "sender_id": event["sender_id"],
+            "sender_username": event["sender_username"],
+            "body": event["body"],
+            "sent_at": event["sent_at"],
+        }))
+
+    @database_sync_to_async
+    def save_message(self, body):
+        from django.contrib.auth.models import User as DjangoUser
+        recipient = DjangoUser.objects.get(id=self.other_id)
+        return models.DirectMessage.objects.create(
+            sender=self.user,
+            recipient=recipient,
+            body=body,
+        )
+
+    @database_sync_to_async
+    def mark_read(self):
+        models.DirectMessage.objects.filter(
+            sender_id=self.other_id,
+            recipient=self.user,
+            read=False,
+        ).update(read=True)
+

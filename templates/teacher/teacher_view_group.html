@@ -107,7 +107,7 @@
                             {% for s in students %}
                                 <tr>
                                     <td>
-                                        <a href="#" class="nav-item" style="padding:0; border-radius:0;">{{ s }}</a>
+                                        <a href="{% url 'user_profile' s.id%}" class="nav-item" style="padding:0; border-radius:0;">{{ s }}</a>
 
                                     </td>
                                     <td class="small">{{ s.email }}</td>

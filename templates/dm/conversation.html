@@ -1,0 +1,128 @@
+{% extends '_base.html' %}
+{% load static %}
+
+{% block content %}
+<header class="page-header">
+    <div class="dm-conv-header">
+        <a class="btn btn-ghost" href="{% url 'dm_inbox' %}">← Back</a>
+        <div class="dm-avatar">{{ other.username|slice:":1"|upper }}</div>
+        <div>
+            <div class="dm-conv-name">{{ other.username }}</div>
+            {% if other.profile.display_name %}
+                <div class="small">{{ other.profile.display_name }}</div>
+            {% endif %}
+        </div>
+        <div class="dm-conn-status" id="dmStatus">
+            <span class="dm-conn-dot" id="dmDot"></span>
+            <span id="dmStatusText">Connecting…</span>
+        </div>
+    </div>
+</header>
+
+<div class="dm-window">
+    <div class="dm-messages" id="dmMessages">
+        {% for msg in messages %}
+        <div class="dm-msg {% if msg.sender == request.user %}dm-msg-me{% else %}dm-msg-them{% endif %}" data-id="{{ msg.id }}">
+            <div class="dm-msg-bubble">{{ msg.body }}</div>
+            <div class="dm-msg-meta">{{ msg.sent_at|date:"d M, H:i" }}</div>
+        </div>
+        {% empty %}
+        <div class="dm-empty" id="dmEmpty">Send the first message!</div>
+        {% endfor %}
+    </div>
+
+    <form class="dm-input-row" id="dmForm" autocomplete="off">
+        <input type="text" id="dmInput" class="dm-input" placeholder="Type a message…" maxlength="2000" autofocus>
+        <button type="submit" class="btn btn-primary" id="dmSendBtn">Send</button>
+    </form>
+</div>
+
+<script>
+    const ME_ID = {{ request.user.id }};
+    const OTHER_ID = {{ other.id }};
+    const proto = window.location.protocol === 'https:' ? 'wss' : 'ws';
+
+    const messagesEl = document.getElementById('dmMessages');
+    const form = document.getElementById('dmForm');
+    const input = document.getElementById('dmInput');
+    const sendBtn = document.getElementById('dmSendBtn');
+    const dot = document.getElementById('dmDot');
+    const statusText = document.getElementById('dmStatusText');
+
+    let ws = null;
+    let reconnectTimer = null;
+    let reconnectDelay = 1500;
+
+    function setStatus(state) {
+        dot.className = 'dm-conn-dot dm-conn-' + state;
+        statusText.textContent = state === 'online' ? 'Connected' : state === 'offline' ? 'Disconnected — retrying…' : 'Connecting…';
+        sendBtn.disabled = state !== 'online';
+        input.disabled = state !== 'online';
+    }
+
+    function scrollBottom() {
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    function escHtml(s) {
+        return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    function appendMessage(data) {
+        const empty = document.getElementById('dmEmpty');
+        if (empty) empty.remove();
+
+        if (document.querySelector(`.dm-msg[data-id="${data.id}"]`)) return;
+
+        const isMe = data.sender_id === ME_ID;
+        const wrap = document.createElement('div');
+        wrap.className = `dm-msg ${isMe ? 'dm-msg-me' : 'dm-msg-them'}`;
+        wrap.dataset.id = data.id;
+        wrap.innerHTML = `
+            <div class="dm-msg-bubble">${escHtml(data.body)}</div>
+            <div class="dm-msg-meta">${data.sent_at}</div>
+        `;
+        messagesEl.appendChild(wrap);
+        scrollBottom();
+    }
+
+    function connect() {
+        ws = new WebSocket(`${proto}://${window.location.host}/ws/dm/${OTHER_ID}/`);
+
+        ws.onopen = () => {
+            setStatus('online');
+            reconnectDelay = 1500;
+        };
+
+        ws.onmessage = (e) => {
+            const data = JSON.parse(e.data);
+            if (data.type === 'dm_message') {
+                appendMessage(data);
+            }
+        };
+
+        ws.onclose = () => {
+            setStatus('offline');
+            reconnectTimer = setTimeout(connect, reconnectDelay);
+            reconnectDelay = Math.min(reconnectDelay * 2, 10000);
+        };
+
+        ws.onerror = () => {
+            ws.close();
+        };
+    }
+
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const body = input.value.trim();
+        if (!body || !ws || ws.readyState !== WebSocket.OPEN) return;
+        ws.send(JSON.stringify({ body }));
+        input.value = '';
+        input.focus();
+    });
+
+    setStatus('connecting');
+    connect();
+    scrollBottom();
+</script>
+{% endblock %}
