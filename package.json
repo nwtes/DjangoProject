@@ -6,7 +6,7 @@
   "scripts": {
     "build": "vite build",
     "dev": "vite",
-    "heroku-postbuild": "npm run build && node -e \"const fs=require('fs'); if(fs.existsSync('static_build/.vite/manifest.json')) fs.copyFileSync('static_build/.vite/manifest.json','static_build/manifest.json');\""
+    "heroku-postbuild": "npm run build && node -e \"const fs=require('fs'); const src='static_build/.vite/manifest.json'; if(fs.existsSync(src)){fs.copyFileSync(src,'static_build/manifest.json'); fs.mkdirSync('staticfiles',{recursive:true}); fs.copyFileSync(src,'staticfiles/manifest.json'); console.log('manifest.json copied to static_build/ and staticfiles/');}else{console.error('ERROR: '+src+' not found');process.exit(1);}\""
   },
   "engines": {
     "node": "20.x",

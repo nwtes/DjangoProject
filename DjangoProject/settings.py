@@ -143,6 +143,7 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 
 STATICFILES_DIRS = [
     BASE_DIR / "static",
+    BASE_DIR / "static_build",
 ]
 
 DJANGO_VITE_DEV_MODE = DEBUG
@@ -150,17 +151,10 @@ DJANGO_VITE_DEV_MODE = DEBUG
 if DEBUG:
     DJANGO_VITE_DEV_SERVER_HOST = "localhost"
     DJANGO_VITE_DEV_SERVER_PORT = 5173
-else:
-    DJANGO_VITE_MANIFEST_PATH = BASE_DIR / "static_build" / ".vite" / "manifest.json"
-    DJANGO_VITE_STATIC_URL_PREFIX = "/static_build/"
-
-
-if DEBUG:
     DJANGO_VITE_STATIC_URL_PREFIX = ""
 else:
-    DJANGO_VITE_STATIC_URL_PREFIX = "/static_build/"
-
-DJANGO_VITE_DEV_MODE = DEBUG
+    DJANGO_VITE_MANIFEST_PATH = BASE_DIR / "staticfiles" / "manifest.json"
+    DJANGO_VITE_STATIC_URL_PREFIX = ""
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -168,7 +162,7 @@ DJANGO_VITE_DEV_MODE = DEBUG
 if DEBUG:
     STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
 else:
-    STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+    STATICFILES_STORAGE = "whitenoise.storage.CompressedStaticFilesStorage"
 
 
 
@@ -201,5 +195,4 @@ else:
             },
         },
     }
-#DJANGO_VITE_MANIFEST_PATH = BASE_DIR / "static_build" / ".vite" / "manifest.json"
 
