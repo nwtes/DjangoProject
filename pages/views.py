@@ -175,25 +175,23 @@ def student_group_view(request):
 def teacher_group_view(request):
     teacher = request.user.profile
     group_id = request.GET.get('group_id')
+    groups = ClassGroup.objects.filter(subject__teacher=teacher)
     if group_id:
-        current_group = get_object_or_404(ClassGroup,id = group_id)
+        current_group = get_object_or_404(ClassGroup, id=group_id)
     else:
-        current_group = get_object_or_404(ClassGroup,id = 1)
-        if not current_group:
-            pass
-    groups = ClassGroup.objects.filter(subject__teacher = teacher)
-    posts = Announcement.objects.filter(group = current_group)
+        current_group = groups.first()
+    posts = Announcement.objects.filter(group=current_group) if current_group else Announcement.objects.none()
     students = Profile.objects.filter(
         role='student',
-        groups__group = current_group
-    ).distinct()
+        groups__group=current_group
+    ).distinct() if current_group else Profile.objects.none()
     context = {
         'current_group': current_group,
-        'groups' : groups,
+        'groups': groups,
         'students': students,
-        'announcements' : posts
+        'announcements': posts
     }
-    return render(request,'teacher/teacher_view_group.html',context)
+    return render(request, 'teacher/teacher_view_group.html', context)
 
 
 def student_group(request,group_id):

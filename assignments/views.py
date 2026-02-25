@@ -11,6 +11,7 @@ from editor.models import TaskDocument
 import json
 
 
+@login_required
 def student_task_view(request, task_id):
     student = request.user.profile
     task = get_object_or_404(Task, id=task_id)

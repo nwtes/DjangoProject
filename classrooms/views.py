@@ -1,9 +1,10 @@
 from django.shortcuts import render,redirect
+from django.contrib.auth.decorators import login_required
 from .forms import AnnouncementForm
 from .models import Announcement,ClassGroup
 
 
-
+@login_required
 def create_announcement(request):
     teacher = request.user.profile
     allowed_groups = ClassGroup.objects.filter(subject__teacher = teacher)
