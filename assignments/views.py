@@ -1,13 +1,14 @@
 from django.contrib.auth.decorators import login_required
 from django.db.models import OuterRef, Exists, Subquery
-from django.shortcuts import render, get_object_or_404 , redirect,reverse
-from .models import Task,Submission,FinalSubmission
+from django.shortcuts import render, get_object_or_404, redirect, reverse
+from .models import Task, Submission, FinalSubmission
 from .forms import GradingForm
 from classrooms.models import ClassGroup
 from accounts.models import Profile
 from django.http import JsonResponse
+from django.utils import timezone
 from django.middleware.csrf import get_token
-from editor.models import TaskDocument
+from editor.models import TaskDocument, TaskDocumentVersion
 import json
 
 
@@ -16,6 +17,7 @@ def student_task_view(request, task_id):
     student = request.user.profile
     task = get_object_or_404(Task, id=task_id)
     autosave_url = reverse("autosave", args=(task_id,))
+    snapshot_url = reverse("snapshot", args=(task_id,))
     csrf_token = get_token(request)
     document, _ = TaskDocument.objects.get_or_create(
         task=task,
@@ -29,6 +31,7 @@ def student_task_view(request, task_id):
     context = {
         'initial_content': document.content,
         'autosave_url': autosave_url,
+        'snapshot_url': snapshot_url,
         'csrf_token': csrf_token,
         'task': task,
         'submission': submission,
@@ -94,26 +97,45 @@ def autosave_task(request, task_id):
         submission.content = content
         submission.save()
 
-        return JsonResponse({"saved": True})
+        return JsonResponse({"saved": True, "saved_at": "Saved at " + timezone.now().strftime("%H:%M:%S")})
 
     return JsonResponse({"error": "Invalid request"}, status=400)
 
 
+@login_required
+def snapshot_task(request, task_id):
+    if request.method != "POST":
+        return JsonResponse({"error": "Invalid request"}, status=400)
+    try:
+        data = json.loads(request.body)
+    except Exception:
+        return JsonResponse({"error": "Bad JSON"}, status=400)
 
-def submit_task(request,task_id):
+    content = data.get("content", "")
+    task = get_object_or_404(Task, id=task_id)
     student = request.user.profile
-    task = get_object_or_404(Task,id = task_id)
+    document, _ = TaskDocument.objects.get_or_create(task=task, student=student)
+    document.content = content
+    document.save()
 
-    submission = get_object_or_404(Submission,task = task,student = student)
+    TaskDocumentVersion.objects.create(document=document, content=content, author=student)
 
-    final_submission ,created = FinalSubmission.objects.get_or_create(
-        submission = submission,
+    return JsonResponse({"saved": True, "saved_at": "Snapshot at " + timezone.now().strftime("%H:%M:%S")})
+
+
+
+def submit_task(request, task_id):
+    student = request.user.profile
+    task = get_object_or_404(Task, id=task_id)
+
+    submission = get_object_or_404(Submission, task=task, student=student)
+
+    final_submission, created = FinalSubmission.objects.get_or_create(
+        submission=submission,
     )
-    task.submitted = True
-    task.save()
-    
-    if created:
-        pass
+    submission.submitted = True
+    submission.save()
+
     return redirect("student_dashboard")
 
 

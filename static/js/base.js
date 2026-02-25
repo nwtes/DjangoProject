@@ -1,79 +1,81 @@
-import { EditorState, StateEffect } from '@codemirror/state';
+import { EditorState } from '@codemirror/state';
 import { highlightSelectionMatches } from '@codemirror/search';
 import { indentWithTab, history, defaultKeymap, historyKeymap } from '@codemirror/commands';
 import { foldGutter, indentOnInput, indentUnit, bracketMatching, foldKeymap, syntaxHighlighting, defaultHighlightStyle } from '@codemirror/language';
 import { closeBrackets, autocompletion, closeBracketsKeymap, completionKeymap } from '@codemirror/autocomplete';
 import { lineNumbers, highlightActiveLineGutter, highlightSpecialChars, drawSelection, rectangularSelection, crosshairCursor, highlightActiveLine, keymap, EditorView, ViewPlugin } from '@codemirror/view';
 import { python } from '@codemirror/lang-python';
+
 let socket = null;
 window.LAST_SENT_SEQ = 0;
 window.LAST_REMOTE_SEQ = {};
 window.LAST_LOCAL_EDIT_TS = 0;
 let liveSendTimer = null;
 let isApplyingRemote = false;
-export function initEditor({ csrfToken, autosaveUrl,userRole }) {
+
+export function initEditor({ csrfToken, autosaveUrl, snapshotUrl, userRole }) {
     const textarea = document.getElementById("content");
     const status = document.getElementById("autosave-status");
 
     let autoSaveTimer = null;
+    let lastSavedContent = textarea ? textarea.value : '';
+
+    const LS_KEY = `task_draft_${window.docID || 'unknown'}`;
+    const stored = localStorage.getItem(LS_KEY);
+    if (stored && textarea && !textarea.value) {
+        textarea.value = stored;
+    }
 
     function triggerAutosave(text) {
         clearTimeout(autoSaveTimer);
-        status.textContent = "Saving...";
-
+        if (status) status.textContent = "Saving...";
         autoSaveTimer = setTimeout(() => {
             fetch(autosaveUrl, {
                 method: "POST",
-                headers: {
-                    "X-CSRFToken": csrfToken,
-                    "Content-Type": "application/json"
-                },
+                headers: { "X-CSRFToken": csrfToken, "Content-Type": "application/json" },
                 body: JSON.stringify({ content: text })
             })
-            .then(response => response.json())
+            .then(r => r.json())
             .then(data => {
-                status.textContent = data.saved_at;
+                if (status) status.textContent = data.saved_at || "Saved";
+                lastSavedContent = text;
+                localStorage.setItem(LS_KEY, text);
             })
-            .catch(() => {
-                status.textContent = "Error saving";
-            });
+            .catch(() => { if (status) status.textContent = "Error saving"; });
         }, 800);
     }
+
     const liveUpdatePlugin = EditorView.updateListener.of((update) => {
-        if (update.docChanged) {
-            if (isApplyingRemote) return;
-            const text = update.state.doc.toString();
-            window.LAST_LOCAL_EDIT_TS = Date.now();
-            clearTimeout(liveSendTimer);
-            liveSendTimer = setTimeout(() => {
-                try {
-                    if (socket && socket.readyState === WebSocket.OPEN) {
-                        const seq = Date.now();
-                        window.LAST_SENT_SEQ = seq;
-                        socket.send(JSON.stringify({ student_id: window.CURRENT_STUDENT_ID, content: text, seq: seq }));
-                    }
-                } catch (e) {
-                    console.warn('[WS] send failed', e);
+        if (!update.docChanged || isApplyingRemote) return;
+        const text = update.state.doc.toString();
+        window.LAST_LOCAL_EDIT_TS = Date.now();
+        clearTimeout(liveSendTimer);
+        liveSendTimer = setTimeout(() => {
+            try {
+                if (socket && socket.readyState === WebSocket.OPEN) {
+                    const seq = Date.now();
+                    window.LAST_SENT_SEQ = seq;
+                    socket.send(JSON.stringify({ student_id: window.CURRENT_STUDENT_ID, content: text, seq }));
                 }
-            }, 300);
-        }
+            } catch (e) {
+                console.warn('[WS] send failed', e);
+            }
+        }, 300);
     });
+
     const autosavePlugin = ViewPlugin.define(() => ({
         update(update) {
             if (update.docChanged) {
                 const txt = update.view.state.doc.toString();
                 triggerAutosave(txt);
-                // keep hidden textarea in sync so other scripts can read live content
-                try {
-                    if (textarea) textarea.value = txt;
-                } catch (e) {}
+                try { if (textarea) textarea.value = txt; } catch (e) {}
             }
         }
     }));
 
     const editor = new EditorView({
         state: EditorState.create({
-            doc: textarea.value,
+            doc: textarea ? textarea.value : '',
             extensions: [
                 autosavePlugin,
                 lineNumbers(),
@@ -108,29 +110,77 @@ export function initEditor({ csrfToken, autosaveUrl,userRole }) {
         parent: document.getElementById("editor")
     });
 
-
-    // expose editor instance globally so other scripts (run button, pyodide loader) can access live content
     try { window.editorInstance = editor; window.editorReady = true; } catch (e) {}
 
-    if (isLive) {
+    function applyRemoteContent(newText) {
+        const current = editor.state.doc.toString();
+        if (newText === current) return;
+        isApplyingRemote = true;
+        editor.dispatch({ changes: { from: 0, to: current.length, insert: newText } });
+        setTimeout(() => { isApplyingRemote = false; }, 0);
+    }
+
+    const snapshotBtn = document.getElementById('btn-save-snapshot');
+    if (snapshotBtn && snapshotUrl) {
+        snapshotBtn.addEventListener('click', () => {
+            const content = editor.state.doc.toString();
+            snapshotBtn.textContent = 'Saving...';
+            fetch(snapshotUrl, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content })
+            })
+            .then(r => r.json())
+            .then(data => {
+                lastSavedContent = content;
+                if (status) status.textContent = data.saved_at || 'Snapshot saved';
+                snapshotBtn.textContent = 'Save snapshot';
+            })
+            .catch(() => { snapshotBtn.textContent = 'Save snapshot'; });
+        });
+    }
+
+    const diffBtn = document.getElementById('btn-show-diff');
+    const diffModal = document.getElementById('diff-modal');
+    const diffBackdrop = document.getElementById('diff-backdrop');
+
+    function openDiff() {
+        const current = editor.state.doc.toString();
+        diffModal.querySelector('pre.old').textContent = lastSavedContent || '(no saved version)';
+        diffModal.querySelector('pre.new').textContent = current;
+        diffModal.style.display = 'block';
+        if (diffBackdrop) diffBackdrop.style.display = 'block';
+    }
+    function closeDiff() {
+        diffModal.style.display = 'none';
+        if (diffBackdrop) diffBackdrop.style.display = 'none';
+    }
+
+    if (diffBtn && diffModal) {
+        diffBtn.addEventListener('click', openDiff);
+        const closeBtn = diffModal.querySelector('button.close');
+        if (closeBtn) closeBtn.addEventListener('click', closeDiff);
+    }
+    if (diffBackdrop) diffBackdrop.addEventListener('click', closeDiff);
+
+    const lockBtn = document.getElementById('toggle-lock');
+    if (lockBtn) {
+        let locked = false;
+        lockBtn.addEventListener('click', () => {
+            locked = !locked;
+            editor.setEditable(!locked);
+            lockBtn.textContent = locked ? 'Unlock editing' : 'Lock editing';
+            lockBtn.style.opacity = locked ? '0.6' : '1';
+        });
+    }
+
+    if (!isLive) {
+        console.log("Task is NOT live — websockets disabled.");
+        return editor;
+    }
+
     console.log("Task is live — attempting websocket connection...");
-
     socket = new WebSocket(window.WS_URL);
-
-    socket.onopen = () => {
-        console.log("%c[WS] Connected successfully!", "color: #00c853; font-weight: bold;");
-        updateConnIndicator('connected');
-    };
-
-    socket.onerror = (err) => {
-        console.log("%c[WS] Error:", "color: #d50000; font-weight: bold;", err);
-        updateConnIndicator('error');
-    };
-
-    socket.onclose = () => {
-        console.log("%c[WS] Connection closed.", "color: #ffab00; font-weight: bold;");
-        updateConnIndicator('offline');
-    };
 
     function updateConnIndicator(state) {
         const el = document.getElementById('ws-connection-indicator');
@@ -138,211 +188,142 @@ export function initEditor({ csrfToken, autosaveUrl,userRole }) {
         const dot = el.querySelector('.dot');
         const text = el.querySelector('.text');
         el.dataset.state = state;
-        if (state === 'connected') {
-            if (dot) dot.style.background = '#39d1a2';
-            if (text) text.textContent = 'Connected';
-        } else if (state === 'error') {
-            if (dot) dot.style.background = '#ff6b6b';
-            if (text) text.textContent = 'Error';
-        } else if (state === 'offline') {
-            if (dot) dot.style.background = '#94a3b8';
-            if (text) text.textContent = 'Offline';
-        } else {
-            if (dot) dot.style.background = '#94a3b8';
-            if (text) text.textContent = 'Offline';
-        }
+        const colors = { connected: '#39d1a2', error: '#ff6b6b', offline: '#94a3b8' };
+        const labels = { connected: 'Connected', error: 'Error', offline: 'Offline' };
+        if (dot) dot.style.background = colors[state] || colors.offline;
+        if (text) text.textContent = labels[state] || 'Offline';
     }
 
-    function applyRemoteContent(newText) {
-        const current = editor.state.doc.toString();
-
-        if (newText === current) return;
-
-        isApplyingRemote = true;
-        editor.dispatch({
-            changes: {
-                from: 0,
-                to: current.length,
-                insert: newText
-            }
-        });
-        setTimeout(() => { isApplyingRemote = false; }, 0);
-    }
+    socket.onopen = () => { updateConnIndicator('connected'); };
+    socket.onerror = () => { updateConnIndicator('error'); };
+    socket.onclose = () => { updateConnIndicator('offline'); };
 
     socket.onmessage = (event) => {
-        const data = JSON.parse(event.data);
+        let data;
+        try { data = JSON.parse(event.data); } catch (e) { return; }
 
         if (data.type === "broadcast_change") {
             const sid = data.student_id;
             const seq = Number(data.seq) || 0;
             const last = window.LAST_REMOTE_SEQ[sid] || 0;
-            if (sid === window.CURRENT_STUDENT_ID && seq === window.LAST_SENT_SEQ) {
-                return;
-            }
-            if (seq <= last) {
-                return;
-            }
-            const now = Date.now();
-            const recentEdit = (now - (window.LAST_LOCAL_EDIT_TS || 0)) < 500;
+            if (seq <= last) return;
             window.LAST_REMOTE_SEQ[sid] = seq;
+            const recentEdit = (Date.now() - (window.LAST_LOCAL_EDIT_TS || 0)) < 500;
             if (userRole === "student") {
-                if (sid === CURRENT_STUDENT_ID) {
-                    if (!recentEdit) applyRemoteContent(data.content);
+                if (sid === window.CURRENT_STUDENT_ID && seq !== window.LAST_SENT_SEQ && !recentEdit) {
+                    applyRemoteContent(data.content);
                 }
-                return;
-            }
-            if (userRole === "teacher") {
+            } else if (userRole === "teacher") {
                 window.STUDENT_CACHE[sid] = data.content;
-                if (sid === CURRENT_STUDENT_ID) {
-                    if (!recentEdit) applyRemoteContent(data.content);
-                }
-                return;
-            }
-        }
-
-        if (userRole === "student") {
-            if (data.type === 'teacher_watch') {
-                if (data.action === 'start' && String(data.student_id) === String(CURRENT_STUDENT_ID)) {
-                    const ind = document.getElementById('teacher-watching-indicator'); if (ind) ind.style.display = 'inline-block';
-                }
-                if (data.action === 'stop' && String(data.student_id) === String(CURRENT_STUDENT_ID)) {
-                    const ind = document.getElementById('teacher-watching-indicator'); if (ind) ind.style.display = 'none';
-                }
-            }
-            if (data.student_id !== CURRENT_STUDENT_ID) return;
-            if (data.type === 'help_request') {
-                return;
-            }
-            applyRemoteContent(data.content);
-        }
-
-        if (userRole === "teacher") {
-
-            if (data.type === "broadcast_change") {
-                window.STUDENT_CACHE[data.student_id] = data.content;
-                if (data.student_id === CURRENT_STUDENT_ID) {
+                if (sid === window.CURRENT_STUDENT_ID && !recentEdit) {
                     applyRemoteContent(data.content);
                 }
             }
+            return;
+        }
 
-            if (data.type === 'help_request') {
-                try {
-                    const title = `${data.username} requested help`;
-                    const note = data.note || '';
-                    showHelpToast(title, note, data.timestamp);
-                } catch (e) {
-                    console.warn('Invalid help_request payload', e);
-                }
-            }
-
-            if (data.type === "student_list") {
-                const ul = document.getElementById("student-list");
-                if (!ul) return;
-                ul.innerHTML = "";
-
-                data.students.forEach(student => {
-                    window.STUDENT_CACHE[student.id] = student.content || "";
-
-                    const li = document.createElement("li");
-                    li.className = 'student-item';
-                    li.dataset.id = student.id;
-
-                    const title = document.createElement('div');
-                    title.className = 'student-title';
-                    title.textContent = student.username + ' (id: ' + student.id + ')';
-
-                    const meta = document.createElement('div');
-                    meta.className = 'student-meta';
-                    meta.style.fontSize = '12px';
-                    meta.style.color = 'var(--muted)';
-                    const lastSeen = student.last_seen ? new Date(Number(student.last_seen)).toLocaleTimeString() : '—';
-                    meta.textContent = 'Last: ' + lastSeen;
-
-                    li.appendChild(title);
-                    li.appendChild(meta);
-
-                    li.addEventListener("click", () => {
-                        const prev = window.CURRENT_STUDENT_ID;
-                        window.CURRENT_STUDENT_ID = student.id;
-                        console.log("Teacher is now viewing student:", student.username, CURRENT_STUDENT_ID);
-
-                        const hdr = document.getElementById('teacher-current-student');
-                        if (hdr) hdr.textContent = student.username + ' (id: ' + student.id + ')';
-
-                        const cached = window.STUDENT_CACHE[student.id];
-                        if (cached !== undefined) {
-                            isApplyingRemote = true;
-                            editor.dispatch({ changes: { from: 0, to: editor.state.doc.length, insert: cached } });
-                            setTimeout(() => { isApplyingRemote = false; }, 0);
+        if (data.type === "student_list") {
+            if (userRole !== "teacher") return;
+            const ul = document.getElementById("student-list");
+            if (!ul) return;
+            const prevSelected = window.CURRENT_STUDENT_ID;
+            ul.innerHTML = "";
+            data.students.forEach(student => {
+                window.STUDENT_CACHE[student.id] = student.content || "";
+                const li = document.createElement("li");
+                li.className = 'student-item' + (student.id === prevSelected ? ' active' : '');
+                li.dataset.id = student.id;
+                const title = document.createElement('div');
+                title.className = 'student-title';
+                title.textContent = student.username;
+                const meta = document.createElement('div');
+                meta.className = 'student-meta';
+                const lastSeen = student.last_seen ? new Date(Number(student.last_seen)).toLocaleTimeString() : '—';
+                meta.textContent = 'Last active: ' + lastSeen;
+                li.appendChild(title);
+                li.appendChild(meta);
+                li.addEventListener("click", () => {
+                    ul.querySelectorAll('.student-item').forEach(el => el.classList.remove('active'));
+                    li.classList.add('active');
+                    const prev = window.CURRENT_STUDENT_ID;
+                    window.CURRENT_STUDENT_ID = student.id;
+                    const hdr = document.getElementById('teacher-current-student');
+                    if (hdr) hdr.textContent = student.username;
+                    const cached = window.STUDENT_CACHE[student.id];
+                    if (cached !== undefined) {
+                        isApplyingRemote = true;
+                        editor.dispatch({ changes: { from: 0, to: editor.state.doc.length, insert: cached } });
+                        setTimeout(() => { isApplyingRemote = false; }, 0);
+                    }
+                    try {
+                        if (socket && socket.readyState === WebSocket.OPEN) {
+                            if (prev && prev !== student.id) socket.send(JSON.stringify({ type: 'watch_stop', student_id: prev }));
+                            socket.send(JSON.stringify({ type: 'watch', student_id: student.id }));
                         }
-
-                        try {
-                            if (socket && socket.readyState === WebSocket.OPEN) {
-                                if (prev) socket.send(JSON.stringify({ type: 'watch_stop', student_id: prev }));
-                                socket.send(JSON.stringify({ type: 'watch', student_id: student.id }));
-                            }
-                        } catch (e) { console.warn('watch send failed', e); }
-                    });
-
-                    ul.appendChild(li);
+                    } catch (e) { console.warn('watch send failed', e); }
                 });
+                ul.appendChild(li);
+            });
+            const countEl = document.getElementById('students-online-count');
+            if (countEl) countEl.textContent = (data.students || []).length;
+            return;
+        }
 
-                const countEl = document.getElementById('students-online-count');
-                if (countEl) countEl.textContent = (data.students || []).length;
+        if (data.type === 'teacher_watch') {
+            if (userRole !== "student") return;
+            const ind = document.getElementById('teacher-watching-indicator');
+            if (!ind) return;
+            if (data.action === 'start' && String(data.student_id) === String(window.CURRENT_STUDENT_ID)) {
+                ind.style.display = 'flex';
+            } else if (data.action === 'stop' && String(data.student_id) === String(window.CURRENT_STUDENT_ID)) {
+                ind.style.display = 'none';
             }
+            return;
+        }
+
+        if (data.type === 'help_request' && userRole === "teacher") {
+            showHelpToast(`${data.username} needs help`, data.note || '');
         }
     };
 
-    function showHelpToast(title, note, timestamp) {
+    function showHelpToast(title, note) {
         const toast = document.getElementById('help-toast');
         if (!toast) return;
         const titleEl = document.getElementById('help-toast-title');
         const noteEl = document.getElementById('help-toast-note');
         if (titleEl) titleEl.textContent = title;
         if (noteEl) noteEl.textContent = note;
-        toast.style.display = 'block';
-        requestAnimationFrame(() => {
-            toast.classList.add('show');
-        });
-        toast.dataset.ts = timestamp || Date.now();
+        toast.classList.add('show');
         clearTimeout(toast._hideTimer);
-        toast._hideTimer = setTimeout(() => { hideHelpToast(); }, 20000);
+        toast._hideTimer = setTimeout(hideHelpToast, 20000);
     }
 
     function hideHelpToast() {
         const toast = document.getElementById('help-toast');
         if (!toast) return;
         toast.classList.remove('show');
-        setTimeout(() => { toast.style.display = 'none'; }, 260);
     }
 
     const toastClose = document.getElementById('help-toast-close');
-    if (toastClose) toastClose.addEventListener('click', () => { hideHelpToast(); });
+    if (toastClose) toastClose.addEventListener('click', hideHelpToast);
 
     const helpBtn = document.getElementById('btn-request-help');
     if (helpBtn) {
         helpBtn.addEventListener('click', () => {
-            const note = prompt('Describe briefly what you need help with (optional)', '');
-            const payload = { type: 'help_request', note: note || '' };
+            const note = prompt('Describe briefly what you need help with (optional):', '');
+            if (note === null) return;
             try {
                 if (socket && socket.readyState === WebSocket.OPEN) {
-                    socket.send(JSON.stringify(payload));
-                    helpBtn.textContent = 'Request sent';
+                    socket.send(JSON.stringify({ type: 'help_request', note }));
+                    helpBtn.textContent = 'Request sent ✓';
                     helpBtn.disabled = true;
                     setTimeout(() => { helpBtn.textContent = 'Need help'; helpBtn.disabled = false; }, 5000);
                 } else {
-                    alert('Cannot send help request: socket not connected');
+                    alert('Not connected — try again in a moment.');
                 }
-            } catch (e) {
-                console.warn('Failed to send help request', e);
-                alert('Failed to send help request');
-            }
+            } catch (e) { console.warn('Failed to send help request', e); }
         });
     }
 
-}
-else {
-    console.log("Task is NOT live — websockets disabled.");
-}
     return editor;
 }

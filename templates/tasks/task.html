@@ -2,18 +2,36 @@
 {% load static %}
 {% load django_vite %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/live_task.css' %}">
+{% endblock %}
+
 {% block content %}
 <div class="task-page">
     <div class="task-header">
         <div class="header-title" role="button" tabindex="0" onclick="toggleDesc(this)" aria-expanded="false">
             <div class="title-left">
-                <h1> {{ task.title }}</h1>
-                <div class="meta">Teacher: {{ task.created_by }} • Group: {{ task.group }}</div>
+                <h1>{{ task.title }}</h1>
+                <div class="meta">
+                    <span class="meta-chip">{{ task.created_by }}</span>
+                    <span class="meta-sep">·</span>
+                    <span class="meta-chip">{{ task.group }}</span>
+                    {% if task.task_type == 'python' %}
+                    <span class="meta-chip meta-chip--python">Python</span>
+                    {% endif %}
+                    {% if task.is_live %}
+                    <span class="meta-chip meta-chip--live">Live</span>
+                    {% endif %}
+                </div>
             </div>
-            <span class="arrow">▼</span>
+            <span class="desc-toggle-icon" aria-hidden="true">
+                <svg class="arrow-svg" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </span>
         </div>
         <div class="header-desc" hidden>
-            <p>{{ task.description }}</p>
+            <div class="desc-body">
+                <p>{{ task.description }}</p>
+            </div>
         </div>
     </div>
 
@@ -21,13 +39,18 @@
         <div class="editor-wrap">
             <div class="editor-topbar" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
                 <div style="display:flex;gap:12px;align-items:center;">
-                    <div id="ws-connection-indicator" style="display:flex;gap:8px;align-items:center;">
-                        <span class="dot" style="width:10px;height:10px;border-radius:999px;display:inline-block;background:#94a3b8"></span>
+                    <div id="ws-connection-indicator" class="conn-indicator">
+                        <span class="dot"></span>
                         <span class="text">Offline</span>
                     </div>
-                    <div id="students-online" style="font-size:13px;color:var(--muted);">Online: <span id="students-online-count">0</span></div>
+                    {% if user_role == "teacher" %}
+                    <div id="students-online" class="students-online-badge">Online: <span id="students-online-count">0</span></div>
+                    {% endif %}
                     {% if user_role == "student" %}
-                    <div id="teacher-watching-indicator" style="display:none;margin-left:10px;font-size:13px;color:#fbbf24;">Teacher is watching this session</div>
+                    <div id="teacher-watching-indicator" class="watching-indicator" style="display:none;">
+                        <span class="watch-pulse"></span>
+                        Teacher is watching
+                    </div>
                     {% endif %}
                 </div>
 
@@ -78,28 +101,36 @@
     <button id="btn-request-help" class="help-btn" title="Request teacher's help">Need help</button>
     {% endif %}
 
-    <!-- Toast for teacher notifications -->
-    <div id="help-toast" class="help-toast" style="display:none;">
+    <!-- Toast for teacher help notifications -->
+    <div id="help-toast" class="help-toast">
         <div class="help-toast-content">
             <div><strong id="help-toast-title"></strong></div>
-            <div id="help-toast-note" style="margin-top:6px;color:var(--muted)"></div>
-            <div style="margin-top:8px;text-align:right;"><button id="help-toast-close" class="btn btn-ghost">Close</button></div>
+            <div id="help-toast-note"></div>
+            <div style="margin-top:10px;text-align:right;">
+                <button id="help-toast-close" class="btn btn-ghost">Dismiss</button>
+            </div>
         </div>
     </div>
 
     <!-- Diff modal -->
-    <div id="diff-modal" style="display:none;position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);background:var(--card);border:1px solid var(--border);padding:16px;border-radius:10px;z-index:9999;max-width:90%;max-height:80%;overflow:auto;">
+    <div id="diff-backdrop"></div>
+    <div id="diff-modal" style="display:none;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-            <h3 style="margin:0;color:#fff;">Diff - Last saved vs Current</h3>
+            <h3>Last save vs Current</h3>
             <button class="close btn btn-ghost">Close</button>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-            <pre class="old" style="white-space:pre-wrap;background:rgba(255,255,255,0.02);padding:8px;border-radius:6px;border:1px solid var(--border);overflow:auto;max-height:60vh;color:var(--muted);"></pre>
-            <pre class="new" style="white-space:pre-wrap;background:rgba(255,255,255,0.02);padding:8px;border-radius:6px;border:1px solid var(--border);overflow:auto;max-height:60vh;color:#dbeafe;"></pre>
+        <div class="diff-labels">
+            <span>Last saved</span>
+            <span>Current</span>
+        </div>
+        <div class="diff-grid">
+            <pre class="old"></pre>
+            <pre class="new"></pre>
         </div>
     </div>
 
     {{ autosave_url|json_script:"autosave-url-data" }}
+    {{ snapshot_url|json_script:"snapshot-url-data" }}
     {{ csrf_token|json_script:"csrf-token-data" }}
     {{ user_role|json_script:"user-role" }}
     {{ user_id|json_script:"user-id" }}
@@ -224,7 +255,7 @@ def run_user_module(path='user_script.py', names=('main','solve','run')):
     </script>
     {% endif %}
 
-    {% vite_asset "static/js/editor.js" %}
+    {% vite_asset "js/editor.js" %}
 
 </div>
 {% endblock %}
