@@ -104,15 +104,20 @@
                             {% for s in students %}
                                 <tr>
                                     <td>
-                                        <a href="#" class="nav-item" style="padding:0; border-radius:0;">{{ s }}</a>
-
+                                        <a href="{% url 'user_profile' s.user.id %}" class="nav-item" style="padding:0; border-radius:0;">
+                                            {{ s.display_name|default:s.user.username }}
+                                        </a>
+                                        {% if s == me %}
+                                            <span class="meta-chip" style="margin-left:6px; font-size:11px;">You</span>
+                                        {% endif %}
                                     </td>
-                                    <td class="small">{{ s.email }}</td>
-                                    <td class="small">{% if s.grade %}{{ s.grade }}{% else %}&mdash;{% endif %}</td>
-                                    <td class="small">{% if s.last_login %}{{ s.last_login|date:"M d, Y" }}{% else %}&mdash;{% endif %}</td>
-                                    <td style="min-width:140px;">
-                                        <a href="#" class="btn">Message</a>
-                                        <a href="#" class="btn btn-ghost">Grade</a>
+                                    <td class="small">{{ s.user.email|default:"—" }}</td>
+                                    <td class="small">{% if s.avg_grade %}{{ s.avg_grade|floatformat:1 }}{% else %}&mdash;{% endif %}</td>
+                                    <td class="small">{% if s.last_seen %}{{ s.last_seen|date:"M d, Y" }}{% else %}&mdash;{% endif %}</td>
+                                    <td style="min-width:120px;">
+                                        {% if s != me %}
+                                            <a href="{% url 'dm_conversation' s.user.id %}" class="btn">Message</a>
+                                        {% endif %}
                                     </td>
                                 </tr>
                             {% endfor %}

@@ -1,4 +1,4 @@
-# Learn
+# Learny
 
 > A full-stack classroom and live-coding platform built with Django, Django Channels, CodeMirror, and Vite.
 > Deployed at: **https://nwte-capstone-ba87c892eb74.herokuapp.com**
@@ -23,7 +23,7 @@
 
 ## Project overview
 
-**Learn** is a web-based classroom management and live coding platform built as a personal course project. It connects teachers and students in a shared, role-driven environment where:
+**Learny** is a web-based classroom management and live coding platform built as a personal course project. It connects teachers and students in a shared, role-driven environment where:
 
 - Teachers create subjects, class groups, and assignments — including tasks that students complete entirely in the browser.
 - Students join groups, write and run code in an embedded editor, submit work, and view their graded feedback.
@@ -689,3 +689,360 @@ JavaScript testing is performed manually due to the project relying on browser-o
   - `create_announcement` was missing `@login_required` — same issue. Fixed.
   - `teacher_group_view` used a hardcoded `get_object_or_404(ClassGroup, id=1)` as fallback, causing 404 in any environment where group id 1 does not exist. Fixed to use `.first()` with a `None`-safe guard.
 - **Coverage**: all 5 Django apps have automated tests. WebSocket consumer logic and Pyodide integration are covered by the manual JS test procedures above, as they depend on browser and async runtime environments that are impractical to exercise with `django.test`.
+
+---
+
+## UX design process
+
+### Design goals
+
+The visual design of Learn prioritises **clarity**, **role-awareness**, and **minimal friction** for both teachers and students. A dark-mode colour palette was chosen to reduce eye strain during coding sessions, and to give the code editor (CodeMirror) a natural context.
+
+### Colour palette
+
+| Token | Value | Used for |
+|---|---|---|
+| `--bg-900` | `#06070a` | Page background |
+| `--bg-800` | `#0f1724` | Sidebar, modals |
+| `--panel` | `#0f1728` | Card backgrounds |
+| `--accent` | `#7c5cff` | Primary actions, links |
+| `--accent-2` | `#39d1a2` | Success states, submitted badges |
+| `--muted` | `#98a0b3` | Secondary text, labels |
+| `--border` | `rgba(255,255,255,0.06)` | Dividers, card edges |
+
+### Typography
+
+- **Body**: Inter, system-ui — chosen for readability at small sizes in table rows and form labels.
+- **Code**: Fira Code (monospace) — used inside the CodeMirror editor for clear character distinction.
+
+### Wireframes
+
+The following ASCII wireframes represent the initial layout planning for key pages. The final implementation follows these layouts closely.
+
+#### Base layout (all pages)
+
+```
+┌──────────────┬──────────────────────────────────┐
+│   SIDEBAR    │           MAIN CONTENT           │
+│              │                                  │
+│  [Avatar]    │  Page header + actions           │
+│  Username    │  ─────────────────────────────   │
+│  ─────────   │                                  │
+│  Home        │  Content cards / tables          │
+│  Dashboard   │                                  │
+│  My groups   │                                  │
+│  My tasks    │                                  │
+│  Messages    │                                  │
+│  Logout      │                                  │
+│              │                                  │
+└──────────────┴──────────────────────────────────┘
+```
+
+#### Teacher dashboard
+
+```
+┌─────────────────────────────────────────────────┐
+│  Teacher Dashboard          [Create task] [Analytics] │
+├─────────────────────────────────────────────────┤
+│  Groups                                         │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐        │
+│  │ CS-A     │ │ CS-B     │ │ Math-A   │        │
+│  │ 24 stud  │ │ 18 stud  │ │ 30 stud  │        │
+│  │ [View]   │ │ [View]   │ │ [View]   │        │
+│  └──────────┘ └──────────┘ └──────────┘        │
+├─────────────────────────────────────────────────┤
+│  Ungraded Submissions                           │
+│  Student  │ Group │ Task       │ [Grade →]      │
+│  ─────────────────────────────────────────────  │
+│                        [View All Submissions]   │
+└─────────────────────────────────────────────────┘
+```
+
+#### Task editor (student)
+
+```
+┌─────────────────────────────────────────────────┐
+│  Task: Fibonacci Sequence      [Save] [Submit]  │
+│  ▾ Task description (collapsible)               │
+├─────────────────────────────────────────────────┤
+│  ┌───────────────────────┬─────────────────┐    │
+│  │  CodeMirror editor    │  Task info      │    │
+│  │                       │  ─────────────  │    │
+│  │  def fibonacci(n):    │  Group: CS-A    │    │
+│  │      ...              │  Teacher: John  │    │
+│  │                       │  Type: Python   │    │
+│  │                       │  [Run ▶]        │    │
+│  │                       │                 │    │
+│  └───────────────────────┴─────────────────┘    │
+│  ● Connected  Saved 12:34                       │
+└─────────────────────────────────────────────────┘
+```
+
+#### Mobile layout (<900px)
+
+```
+┌─────────────────────────┐
+│ ☰  Learn                │  ← burger button
+├─────────────────────────┤
+│  Page header            │
+│  Content cards          │
+│  (full width)           │
+│                         │
+│  Tables scroll          │
+│  horizontally           │
+└─────────────────────────┘
+
+[Sidebar slides in from left on burger click]
+┌──────────────┐
+│  ✕           │  ← close button
+│  [Avatar]    │
+│  Username    │
+│  ─────────   │
+│  Home        │
+│  Dashboard   │
+│  ...         │
+└──────────────┘
+```
+
+### Design decisions and rationale
+
+| Decision | Rationale |
+|---|---|
+| Single dark colour scheme, no light mode | Students use the app during long coding sessions — dark mode reduces fatigue and makes the code editor feel natural |
+| Role-aware sidebar (different links per role) | Reduces cognitive load — users only see actions relevant to them; avoids confusion from seeing disabled links |
+| Collapsible task description | Keeps the editor as large as possible on smaller screens; description is available on demand |
+| Auto-create Submission on task open | Removes a setup step for students — first visit is all it takes to start working |
+| Floating "? Help" button on live tasks | Positioned bottom-right, out of the way of the editor, but immediately accessible during a live session |
+| Tables with horizontal scroll wrapper on mobile | Preserves information density on desktop; allows tables to be used on mobile without breaking the layout |
+| Green dot connection indicator | Gives immediate, ambient feedback on WebSocket state without a modal or alert |
+
+### Responsiveness approach
+
+- **Breakpoints**: `900px` (tablet/mobile) and `600px` (small mobile).
+- At `<900px`: sidebar collapses behind a fixed burger button; main content takes full width with top padding.
+- At `<900px`: all tables are wrapped in `.inbox-container { overflow-x: auto }` — tables scroll horizontally rather than breaking layout.
+- At `<900px`: multi-column grids (`subject-grid`, `cards-grid`) collapse to single column.
+- At `<900px`: flex rows in forms and headers switch to `flex-direction: column`.
+- Tested manually on Chrome DevTools at 375px (iPhone SE), 768px (iPad), and 1280px (desktop).
+
+---
+
+## Heroku deployment
+
+### Prerequisites
+
+- A [Heroku account](https://heroku.com) with billing enabled (required for Redis add-on).
+- [Heroku CLI](https://devcenter.heroku.com/articles/heroku-cli) installed and logged in.
+- [Git](https://git-scm.com/) installed.
+- [Node.js 20+](https://nodejs.org/) and [Python 3.11+](https://python.org/) installed locally.
+
+### Step-by-step deployment
+
+#### 1. Clone the repository
+
+```bash
+git clone https://github.com/nwtes/DjangoProject.git
+cd DjangoProject
+```
+
+#### 2. Create a Heroku app
+
+```bash
+heroku create your-app-name
+```
+
+#### 3. Set buildpacks (Node must come before Python)
+
+```bash
+heroku buildpacks:add --index 1 heroku/nodejs
+heroku buildpacks:add --index 2 heroku/python
+```
+
+Verify the order:
+
+```bash
+heroku buildpacks
+# Expected:
+# 1. heroku/nodejs
+# 2. heroku/python
+```
+
+#### 4. Provision add-ons
+
+```bash
+heroku addons:create heroku-postgresql:essential-0
+heroku addons:create heroku-redis:mini
+```
+
+Both add-ons automatically set `DATABASE_URL` and `REDIS_URL` as config vars.
+
+#### 5. Set environment variables
+
+```bash
+heroku config:set SECRET_KEY="your-long-random-secret-key"
+heroku config:set DEBUG="False"
+heroku config:set DJANGO_VITE_DEV_MODE="False"
+```
+
+Generate a secure secret key locally:
+
+```bash
+python -c "import secrets; print(secrets.token_urlsafe(50))"
+```
+
+#### 6. Verify config vars
+
+```bash
+heroku config
+# Should show: SECRET_KEY, DEBUG, DATABASE_URL, REDIS_URL, DJANGO_VITE_DEV_MODE
+```
+
+#### 7. Files that must be present in the repository
+
+| File | Purpose |
+|---|---|
+| `Procfile` | `web: daphne DjangoProject.asgi:application --port $PORT --bind 0.0.0.0` |
+| `runtime.txt` | `python-3.11.x` — tells Heroku which Python version to use |
+| `requirements.txt` | All Python dependencies |
+| `package.json` | Must include `heroku-postbuild` script that runs `npm run build` |
+| `static_build/` | Vite build output — must be committed or built in CI |
+| `staticfiles/manifest.json` | Must match the Vite manifest |
+
+#### 8. Deploy
+
+```bash
+git push heroku main
+```
+
+During the build Heroku will:
+1. Run `npm ci` and `npm run heroku-postbuild` (Vite build).
+2. Run `pip install -r requirements.txt`.
+3. Run `python manage.py collectstatic --noinput` (via `release` phase or post-deploy).
+
+#### 9. Run database migrations
+
+```bash
+heroku run python manage.py migrate
+```
+
+#### 10. Create a superuser (optional)
+
+```bash
+heroku run python manage.py createsuperuser
+```
+
+#### 11. Verify the deployment
+
+```bash
+heroku open
+heroku logs --tail
+```
+
+### Environment variables reference
+
+| Variable | Required | Description | Example |
+|---|---|---|---|
+| `SECRET_KEY` | Yes | Django secret key — must be long and random | `abc123...` |
+| `DEBUG` | Yes | Must be `False` in production | `False` |
+| `DATABASE_URL` | Auto | Set by Heroku Postgres add-on | `postgres://...` |
+| `REDIS_URL` | Auto | Set by Heroku Redis add-on | `redis://...` |
+| `DJANGO_VITE_DEV_MODE` | Yes | Must be `False` in production | `False` |
+
+### How `env.py` works (local only)
+
+The project uses `env.py` (never committed) to set environment variables locally:
+
+```python
+import os
+os.environ['SECRET_KEY'] = 'local-dev-secret'
+os.environ['DEBUG'] = 'True'
+# Leave DATABASE_URL unset to use SQLite
+```
+
+In `settings.py`:
+
+```python
+try:
+    import env
+except ImportError:
+    pass
+
+SECRET_KEY = os.environ.get('SECRET_KEY')
+DEBUG = os.environ.get('DEBUG', 'False') == 'True'
+```
+
+### Local development (quick reference)
+
+```bash
+# 1. Install dependencies
+pip install -r requirements.txt
+npm install
+
+# 2. Set up local env.py (see above)
+
+# 3. Run migrations
+python manage.py migrate
+
+# 4. Start services (two terminals)
+redis-server
+npm run dev          # Vite on :5173
+python manage.py runserver  # Django on :8000
+
+# 5. Visit http://localhost:8000
+```
+
+---
+
+## AI reflection (LO8)
+
+This project was developed with **GitHub Copilot** as the primary AI assistant. The following sections document how AI tools affected the development process.
+
+### 8.1 AI-assisted code generation
+
+GitHub Copilot was used extensively to generate boilerplate and accelerate implementation of well-defined patterns:
+
+- **Django views**: Copilot generated the initial structure of all CRUD views (create/edit/delete task, grading view, student submission view). The generated code was reviewed, decorator protection (`@login_required`, `@role_required`) was verified or added, and docstrings were added to every function.
+- **WebSocket consumer**: The initial `EditorConsumer` class was largely Copilot-generated based on Django Channels documentation patterns. Group broadcast logic and the `help_request` message handler were generated and then debugged manually.
+- **CodeMirror setup**: Copilot generated the initial `initEditor` function in `base.js` from a description of requirements (CodeMirror 6, Python mode, One Dark theme, autosave). The generated code required fixes for the `drawSelection` import error and the `@codemirror/state` duplicate-instance error.
+- **Django model definitions**: Model fields, `__str__` methods, `Meta.unique_together` constraints, and `post_save` signal for auto-creating `Profile` were all Copilot-generated.
+- **Test cases**: Copilot generated the initial test skeletons for all 5 apps. Test class structure, `setUp` methods, and individual test methods were generated from descriptions of what each test should verify.
+
+### 8.2 AI-assisted debugging
+
+Copilot and iterative prompting were used to resolve several bugs:
+
+- **`FieldError: Cannot resolve keyword 'duration_minutes'`**: After `Task` fields `duration_minutes` and `started_at` were removed in migration `0008`, Copilot identified all remaining references in `views.py` and generated the corrected code removing those fields.
+- **CORS / Vite dev mode**: Cross-origin errors in local development were traced to the `DJANGO_VITE_DEV_MODE` setting and the Vite dev server not running. Copilot helped identify the root cause and the correct sequence of commands.
+- **`NoReverseMatch` for `groups` URL**: A URL pattern mismatch between `path("group", ...)` and template `{% url 'groups' group_id %}` was identified with Copilot's help, which generated the corrected URL patterns.
+- **Missing `@login_required` on views**: A systematic audit prompted via Copilot identified 8 views missing authentication decorators across 4 apps, which were all added in a single pass.
+- **Duplicate `toggle_live` function**: Copilot identified that the function was defined twice in `assignments/views.py` and generated the de-duplicated version.
+
+### 8.3 AI-assisted optimisation and UX improvements
+
+Copilot contributed to performance and UX improvements in the following areas:
+
+- **Context processor**: Copilot suggested centralising `ungraded_count`, `pending_tasks_count`, and `unread_dm_count` into a single context processor (`pages/context_processors.py`) rather than passing them in every view individually. This eliminated repeated query logic across 10+ views.
+- **QuerySet annotations**: Copilot suggested using `annotate()` with `Count` and `Exists` subqueries for the student task list and teacher dashboard, replacing Python-level loops that would have caused N+1 query problems.
+- **localStorage fallback**: Copilot suggested storing editor content in `localStorage` on every keystroke and restoring it on reconnect/refresh as a low-cost reliability improvement.
+- **Sequence numbers on WebSocket messages**: Copilot suggested adding a `seq` field to outgoing editor updates to allow the receiver to discard stale out-of-order messages — a lightweight conflict avoidance technique.
+- **`select_related` on querysets**: Copilot identified several views loading related objects with N+1 queries (e.g. `Submission.task.group`) and added `select_related` calls to reduce database round-trips.
+
+### 8.4 AI-generated unit tests
+
+GitHub Copilot generated the initial versions of all test cases across all 5 apps. The process was:
+
+1. Describe the model or view to test in a comment or prompt.
+2. Copilot generated a test class with `setUp` and individual test methods.
+3. Tests were run; failures identified cases where the generated assertions were incorrect (e.g. expected HTTP 200 but received 302 for a protected view — corrected to 302).
+4. Coverage gaps (e.g. no test for `@role_required` returning 403, no test for `IntegrityError` on duplicate submissions) were identified manually and filled with Copilot-generated additions.
+
+Key adjustments made to Copilot-generated tests:
+- Added `profile.role = 'teacher'` / `'student'` + `.save()` after user creation — Copilot initially omitted the role assignment, causing tests to fail with `PermissionDenied`.
+- Corrected `assertRedirects` target URLs to match actual URL patterns.
+- Added the `student_submission_view` ownership guard test after manually identifying that a student could access another student's submission.
+
+### Summary
+
+AI tools significantly accelerated initial code generation and reduced the time spent on boilerplate. The most valuable contributions were in debugging (systematic audits of decorator coverage and field references), query optimisation (N+1 detection and annotation suggestions), and test generation. All AI-generated code was reviewed, tested, and adjusted before being committed.
+
+

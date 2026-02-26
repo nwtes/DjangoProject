@@ -62,7 +62,6 @@
                         {% endif %}
                         </a>
                         <a class="nav-item" href="{% url 'create_task' %}">Create task</a>
-                        <a class="nav-item" href="{% url 'live_tasks_available' %}">Live tasks</a>
                     {% else %}
                         <a class="nav-item" href="{% url 'student_tasks' %}">My tasks
                         {% if pending_tasks_count %}
@@ -93,6 +92,16 @@
 
         <main class="main-content">
             <div class="content">
+                {% if messages %}
+                    <div class="messages-container">
+                        {% for message in messages %}
+                            <div class="message message-{{ message.tags }}" role="alert">
+                                {{ message }}
+                                <button class="message-close" onclick="this.parentElement.remove()" aria-label="Dismiss">&times;</button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
                 {% block content %}
 
                 {% endblock %}

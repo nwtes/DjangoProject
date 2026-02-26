@@ -135,7 +135,7 @@
 
     .inbox-table {
         min-width: 600px;
-
+    }
 
     .task-body {
         flex-direction: column;

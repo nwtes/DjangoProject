@@ -195,16 +195,18 @@ def student_group_view(request):
         return render(request, 'students/student_view_group.html', {'groups': groups, 'current_group': None})
 
     posts = Announcement.objects.filter(group=current_group)
+    from django.db.models import Avg
     students = Profile.objects.filter(
         role='student',
         groups__group=current_group
-    ).distinct()
+    ).annotate(avg_grade=Avg('submission__grade')).distinct()
 
     context = {
         'current_group': current_group,
         'groups': groups,
         'students': students,
-        'announcements': posts
+        'announcements': posts,
+        'me': student,
     }
     return render(request, 'students/student_view_group.html', context)
 

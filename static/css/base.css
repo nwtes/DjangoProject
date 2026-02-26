@@ -300,16 +300,6 @@ body {
 .cm-editor .cm-scroller{ background: transparent; color: #e6eef8; }
 .cm-editor .cm-content{ font-family: "Fira Code", monospace; font-size:14px; }
 
-@media (max-width:900px){
-    .sidebar{ display:none; }
-    .main-content{ padding:18px; }
-    .home-hero{ flex-direction:column; align-items:flex-start; }
-    .hero-illustration{ width:100%; display:block; }
-    .task-body{ flex-direction:column; }
-    .task-side{ width:100%; order:2; }
-    .editor-wrap{ order:1; min-height:300px; }
-}
-
 .small{ font-size:13px; color:var(--muted); }
 
 
@@ -375,3 +365,30 @@ body {
 .student-item:hover { background: rgba(255,255,255,0.02); }
 .student-title { font-weight:600; }
 .student-meta { font-size: 12px; color: #94a3b8; }
+
+.messages-container { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+.message {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 14px;
+    border: 1px solid transparent;
+}
+.message-success { background: rgba(57,209,162,0.12); border-color: rgba(57,209,162,0.3); color: #39d1a2; }
+.message-error   { background: rgba(239,68,68,0.12);  border-color: rgba(239,68,68,0.3);  color: #f87171; }
+.message-warning { background: rgba(251,191,36,0.12); border-color: rgba(251,191,36,0.3); color: #fbbf24; }
+.message-info    { background: rgba(124,92,255,0.12); border-color: rgba(124,92,255,0.3); color: #a78bfa; }
+.message-close {
+    background: transparent;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+    padding: 0 4px;
+    opacity: 0.7;
+}
+.message-close:hover { opacity: 1; }
+

@@ -49,23 +49,15 @@ def live_tasks_for_student(request):
     tasks = Task.objects.filter(
         group__groupmembership__student=profile,
         is_live=True
-    ).distinct().values('id', 'title', 'group__name', 'duration_minutes', 'started_at')
-    now = timezone.now()
-    data = []
-    for t in tasks:
-        seconds_left = None
-        if t['duration_minutes'] and t['started_at']:
-            elapsed = (now - t['started_at']).total_seconds()
-            seconds_left = max(0, int(t['duration_minutes'] * 60 - elapsed))
-            if seconds_left == 0:
-                continue
-        data.append({
+    ).distinct().values('id', 'title', 'group__name')
+    data = [
+        {
             'id': t['id'],
             'title': t['title'],
             'group': t['group__name'] or '',
-            'duration_minutes': t['duration_minutes'],
-            'seconds_left': seconds_left,
-        })
+        }
+        for t in tasks
+    ]
     return JsonResponse({'tasks': data})
 
 
@@ -78,16 +70,8 @@ def toggle_live(request, task_id):
     teacher = request.user.profile
     task = get_object_or_404(Task, id=task_id, created_by=teacher)
     task.is_live = not task.is_live
-    task.started_at = timezone.now() if task.is_live else None
     task.save()
-    seconds_left = None
-    if task.is_live and task.duration_minutes:
-        seconds_left = task.duration_minutes * 60
-    return JsonResponse({
-        'is_live': task.is_live,
-        'started_at': task.started_at.isoformat() if task.started_at else None,
-        'seconds_left': seconds_left,
-    })
+    return JsonResponse({'is_live': task.is_live})
 
 
 @login_required
