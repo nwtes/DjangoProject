@@ -1,4 +1,5 @@
 from django.db import models
+from django.core.validators import MinValueValidator, MaxValueValidator
 from accounts.models import Profile
 from classrooms.models import ClassGroup
 # Create your models here.
@@ -44,7 +45,7 @@ class Submission(models.Model):
     content = models.TextField()
     submitted_at = models.DateTimeField(auto_now_add = True)
     submitted = models.BooleanField(default = False)
-    grade = models.IntegerField(null = True,blank = True)
+    grade = models.IntegerField(null=True, blank=True, validators=[MinValueValidator(0), MaxValueValidator(100)])
     comment = models.TextField(null = True,blank = True)
 
     class Meta:

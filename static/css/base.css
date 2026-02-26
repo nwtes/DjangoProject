@@ -300,6 +300,35 @@ body {
 .cm-editor .cm-scroller{ background: transparent; color: #e6eef8; }
 .cm-editor .cm-content{ font-family: "Fira Code", monospace; font-size:14px; }
 
+.cm-editor .cm-gutters {
+    background: #0d1520;
+    border-right: 1px solid rgba(255,255,255,0.06);
+    color: #4a5568;
+}
+
+.cm-editor .cm-lineNumbers .cm-gutterElement {
+    color: #4a5568;
+    padding: 0 10px 0 6px;
+    min-width: 32px;
+}
+
+.cm-editor .cm-activeLineGutter {
+    background: rgba(124,92,255,0.10);
+    color: #a78bfa;
+}
+
+.cm-editor .cm-foldGutter .cm-gutterElement {
+    color: #4a5568;
+}
+
+.cm-editor .cm-foldGutter .cm-gutterElement:hover {
+    color: #a78bfa;
+}
+
+.cm-editor .cm-activeLine {
+    background: rgba(124,92,255,0.05);
+}
+
 .small{ font-size:13px; color:var(--muted); }
 
 

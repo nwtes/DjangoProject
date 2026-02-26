@@ -36,7 +36,7 @@ input[type="email"],
 input[type="password"],
 select,
 textarea {
-    background: transparent;
+    background: #0f1724;
     border: 1px solid rgba(255, 255, 255, 0.06);
     padding: 10px 12px;
     border-radius: 8px;
@@ -44,6 +44,21 @@ textarea {
     outline: none;
     width: 100%;
     box-sizing: border-box;
+}
+
+select option {
+    background: #0f1724;
+    color: #e6eef8;
+}
+
+select option:disabled {
+    color: #98a0b3;
+}
+
+select.btn {
+    background: #0f1724;
+    color: #e6eef8;
+    width: auto;
 }
 
 textarea {

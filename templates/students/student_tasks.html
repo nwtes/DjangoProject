@@ -92,8 +92,10 @@
                             <div class="small">{% if task.submission_exists %}<span style="color:var(--accent-2); font-weight:700;">Submitted</span>{% else %}<span style="color:var(--muted);">Not submitted</span>{% endif %}</div>
                             <div style="margin-top:8px; display:flex; gap:8px;">
                                 <a href="{% url 'task' task.id %}" class="btn">Open</a>
-                                {% if task.submission_exists %}
-                                    <a href="#" class="btn btn-accent">View</a>
+                                {% if task.graded and task.submission_id %}
+                                    <a href="{% url 'student_submission' task.submission_id %}" class="btn btn-accent">View results</a>
+                                {% elif task.submission_exists %}
+                                    <a href="{% url 'student_submission' task.submission_id %}" class="btn">View</a>
                                 {% else %}
                                     <a href="{% url 'submit' task.id %}" class="btn btn-primary">Submit</a>
                                 {% endif %}

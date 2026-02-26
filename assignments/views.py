@@ -180,6 +180,7 @@ def student_tasks_view(request):
     submissions = FinalSubmission.objects.filter(submission__task=OuterRef('pk'), submission__student=student)
     grade_subquery = Submission.objects.filter(task=OuterRef('pk'), student=student).values('grade')[:1]
     graded_submissions = Submission.objects.filter(task=OuterRef("pk"), student=student, grade__isnull=False)
+    submission_id_subquery = Submission.objects.filter(task=OuterRef('pk'), student=student).values('id')[:1]
 
     tasks = (
         Task.objects
@@ -187,7 +188,8 @@ def student_tasks_view(request):
         .annotate(
             submission_exists=Exists(submissions),
             graded=Exists(graded_submissions),
-            points=Subquery(grade_subquery)
+            points=Subquery(grade_subquery),
+            submission_id=Subquery(submission_id_subquery),
         )
     )
     groups = ClassGroup.objects.filter(groupmembership__student=student)
