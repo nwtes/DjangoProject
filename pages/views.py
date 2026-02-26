@@ -117,9 +117,9 @@ def create_task(request):
 
 def task_page_view(request, task_id):
     teacher = request.user.profile
-    task = get_object_or_404(Task, id = task_id, created_by = teacher)
-    submission = Submission.objects.filter(task = task)
-    return render(request,'tasks/view_task.html',{"task":task,"submission" : submission})
+    task = get_object_or_404(Task, id=task_id, created_by=teacher)
+    submission = Submission.objects.filter(task=task, student__role='student')
+    return render(request, 'tasks/view_task.html', {"task": task, "submission": submission})
 @role_required('teacher')
 def task_page_edit(request,task_id):
     teacher = request.user.profile

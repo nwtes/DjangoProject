@@ -1,9 +1,13 @@
 {% extends '_base.html' %}
 {% load static %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/live_task.css' %}">
+{% endblock %}
+
 {% block content %}
 <div class="page-header">
-    <h1>Tasks (Your created tasks)</h1>
+    <h1>My Tasks</h1>
     <div class="header-actions">
         <a href="{% url 'create_task' %}" class="btn btn-primary">New task</a>
     </div>
@@ -18,7 +22,6 @@
             {% endfor %}
         </select>
     </label>
-
     <label class="small">Grading
         <select name="graded" class="btn">
             <option value="">All</option>
@@ -26,7 +29,6 @@
             <option value="ungraded" {% if request.GET.graded == 'ungraded' %}selected{% endif %}>Ungraded</option>
         </select>
     </label>
-
     <label class="small">Submission
         <select name="submitted" class="btn">
             <option value="">All</option>
@@ -34,55 +36,118 @@
             <option value="unsubmitted" {% if request.GET.submitted == 'unsubmitted' %}selected{% endif %}>Unsubmitted</option>
         </select>
     </label>
-
-    <div style="margin-left:auto; display:flex; gap:8px;">
+    <div style="margin-left:auto;display:flex;gap:8px;">
         <button type="submit" class="btn btn-primary">Apply</button>
         <a href="?" class="btn">Reset</a>
     </div>
 </form>
 
 <div class="inbox-container" style="margin-top:16px;">
-    <table class="inbox-table" aria-describedby="tasks-list">
+    <table class="inbox-table">
         <thead>
             <tr>
-                <th style="width:36%;">Task</th>
-                <th style="width:20%;">Group / Subject</th>
-                <th style="width:14%;">Submissions</th>
-                <th style="width:12%;">Due</th>
-                <th style="width:18%;">Actions</th>
+                <th style="width:34%;">Task</th>
+                <th style="width:18%;">Group</th>
+                <th style="width:10%;">Submissions</th>
+                <th style="width:10%;">Status</th>
+                <th style="width:28%;">Actions</th>
             </tr>
         </thead>
         <tbody>
             {% if tasks %}
                 {% for task in tasks %}
-                    <tr data-task-id="{{ task.id }}">
-                        <td>
-                            <div style="font-weight:700;">{{ task.title }}</div>
-                            <div class="small">Created: {{ task.created_at|default:task.id }}</div>
-                            <div class="header-desc small">{{ task.description|truncatechars:180 }}</div>
-                        </td>
-                        <td class="small">{{ task.group.name }} • {{ task.group.subject }}</td>
-                        <td class="small">{% with cnt=task.submission_set.count %}{{ cnt }}{% endwith %}</td>
-                        <td class="small">&mdash;</td>
-                        <td>
-                            <div style="display:flex; gap:8px;">
-                                <a href="{% url 'view_task' task.id %}" class="btn">Open</a>
-                                <a href="{% url 'edit_task' task.id %}" class="btn">Edit</a>
-                                <form method="POST" action="{% url 'delete_task' task.id %}" style="display:inline;">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-danger">Delete</button>
-                                </form>
-                            </div>
-                        </td>
-                    </tr>
+                <tr data-task-id="{{ task.id }}">
+                    <td>
+                        <div style="font-weight:700;">{{ task.title }}</div>
+                        <div class="small" style="margin-top:3px;">{{ task.description|truncatechars:100 }}</div>
+                    </td>
+                    <td class="small">{{ task.group.name }}</td>
+                    <td class="small">{{ task.student_submission_count }}</td>
+                    <td>
+                        {% if task.is_live %}
+                        <span class="meta-chip meta-chip--live">Live</span>
+                        {% else %}
+                        <span class="meta-chip" style="color:var(--muted);">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                            <a href="{% url 'view_task' task.id %}" class="btn">Open</a>
+                            <a href="{% url 'edit_task' task.id %}" class="btn">Edit</a>
+                            {% if task.is_live %}
+                            <button class="btn btn-danger toggle-live-row"
+                                data-task-id="{{ task.id }}"
+                                data-is-live="true">End session</button>
+                            {% else %}
+                            <button class="btn btn-accent toggle-live-row"
+                                data-task-id="{{ task.id }}"
+                                data-is-live="false">Go live</button>
+                            {% endif %}
+                            <button class="btn btn-danger delete-task-btn"
+                                data-task-id="{{ task.id }}"
+                                data-title="{{ task.title }}">Delete</button>
+                        </div>
+                    </td>
+                </tr>
                 {% endfor %}
             {% else %}
                 <tr>
-                    <td colspan="5" style="padding:22px; text-align:center; color:var(--muted);">No tasks found.</td>
+                    <td colspan="5" style="padding:22px;text-align:center;color:var(--muted);">No tasks found.</td>
                 </tr>
             {% endif %}
         </tbody>
     </table>
 </div>
 
+<form id="delete-task-form" method="POST" style="display:none;">
+    {% csrf_token %}
+</form>
+
+<script>
+(function(){
+    const CSRF = '{{ csrf_token }}';
+
+    document.querySelectorAll('.toggle-live-row').forEach(btn => {
+        btn.addEventListener('click', function(){
+            const taskId = this.dataset.taskId;
+            const originalText = this.textContent;
+            this.disabled = true;
+            this.textContent = '...';
+            fetch('/tasks/task/toggle-live/' + taskId, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': CSRF, 'Content-Type': 'application/json' },
+            })
+            .then(r => r.json())
+            .then(data => {
+                const row = this.closest('tr');
+                const statusCell = row.querySelector('td:nth-child(4)');
+                if (data.is_live) {
+                    this.textContent = 'End session';
+                    this.className = 'btn btn-danger toggle-live-row';
+                    this.dataset.isLive = 'true';
+                    if (statusCell) statusCell.innerHTML = '<span class="meta-chip meta-chip--live">Live</span>';
+                } else {
+                    this.textContent = 'Go live';
+                    this.className = 'btn btn-accent toggle-live-row';
+                    this.dataset.isLive = 'false';
+                    if (statusCell) statusCell.innerHTML = '<span class="meta-chip" style="color:var(--muted);">Inactive</span>';
+                }
+            })
+            .catch(() => { this.textContent = originalText; })
+            .finally(() => { this.disabled = false; });
+        });
+    });
+
+    document.querySelectorAll('.delete-task-btn').forEach(btn => {
+        btn.addEventListener('click', function(){
+            const taskId = this.dataset.taskId;
+            const title = this.dataset.title;
+            if (!confirm('Delete "' + title + '"? This cannot be undone.')) return;
+            const form = document.getElementById('delete-task-form');
+            form.action = '/tasks/' + taskId + '/delete';
+            form.submit();
+        });
+    });
+})();
+</script>
 {% endblock %}

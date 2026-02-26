@@ -1,71 +1,177 @@
 {% extends '_base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/live_task.css' %}">
+{% endblock %}
 
 {% block content %}
 <div class="teacher-task-view">
     <div class="task-card">
-        <div class="task-header">
-            <div>
-                <h1>{{ task.title }}</h1>
-                <div class="task-meta">Created by {{ task.created_by }} • Group: {{ task.group.name }}</div>
-            </div>
-            <div class="task-actions">
-                <a class="btn" href="{% url 'edit_task' task.id %}">Edit</a>
-                <form method="POST" action="{% url 'delete_task' task.id %}" style="display:inline;">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-danger">Delete</button>
-                </form>
+        <div class="task-header" style="background:none;border:none;border-radius:0;padding:0 0 16px 0;">
+            <div class="header-title" style="cursor:default;padding:0;background:none;">
+                <div class="title-left">
+                    <h1>{{ task.title }}</h1>
+                    <div class="meta">
+                        <span class="meta-chip">{{ task.created_by }}</span>
+                        <span class="meta-sep">·</span>
+                        <span class="meta-chip">{{ task.group.name }}</span>
+                        <span class="meta-chip">{{ task.get_task_type_display }}</span>
+                        {% if task.duration_minutes %}
+                        <span class="meta-chip">{{ task.duration_minutes }} min</span>
+                        {% endif %}
+                        {% if task.is_live %}
+                        <span class="meta-chip meta-chip--live" id="live-badge">Live</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="task-actions" style="display:flex;gap:8px;flex-shrink:0;">
+                    <a class="btn" href="{% url 'edit_task' task.id %}">Edit</a>
+                    <form method="POST" action="{% url 'delete_task' task.id %}" id="delete-form" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="button" class="btn btn-danger" onclick="confirmDelete()">Delete</button>
+                    </form>
+                </div>
             </div>
         </div>
 
-        <section class="task-body">
-            <h2>Task description</h2>
-            <div class="header-desc">{{ task.description|linebreaksbr }}</div>
+        <section class="task-body" style="margin-bottom:20px;">
+            <h2 style="font-size:14px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:0 0 8px;">Description</h2>
+            <div style="font-size:14px;line-height:1.75;color:#c8d4e8;">{{ task.description|linebreaksbr }}</div>
         </section>
 
         <section class="submissions">
-            <h3>Submissions</h3>
+            <h2 style="font-size:14px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:0 0 12px;">Submissions ({{ submission|length }})</h2>
             {% if submission %}
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Student</th>
-                            <th>Submitted at</th>
-                            <th>Grade</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for s in submission %}
-                        <tr class="submission-row">
-                            <td class="student"><span class="avatar-sm">{{ s.student.user.username|slice:":1"|upper }}</span> {{ s.student }}</td>
-                            <td class="small">{{ s.submitted_at|date:"M d, Y H:i" }}</td>
-                            <td class="small">{% if s.grade %}<span class="badge graded">{{ s.grade }}</span>{% else %}<span class="badge pending">Not graded</span>{% endif %}</td>
-                            <td class="actions-col"><a class="btn" href="{% url 'submission' s.id %}">View</a></td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                <div class="inbox-container" style="padding:0;">
+                    <table class="inbox-table">
+                        <thead>
+                            <tr>
+                                <th>Student</th>
+                                <th>Submitted at</th>
+                                <th>Grade</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for s in submission %}
+                            <tr>
+                                <td><span class="avatar-sm">{{ s.student.user.username|slice:":1"|upper }}</span> {{ s.student }}</td>
+                                <td class="small">{{ s.submitted_at|date:"M d, Y H:i" }}</td>
+                                <td class="small">
+                                    {% if s.grade %}<span class="badge graded">{{ s.grade }}</span>
+                                    {% else %}<span class="badge pending">Ungraded</span>{% endif %}
+                                </td>
+                                <td><a class="btn" href="{% url 'submission' s.id %}">View</a></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             {% else %}
-                <div class="no-submissions">No submissions yet.</div>
+                <div style="padding:20px;text-align:center;color:var(--muted);font-size:14px;">No submissions yet.</div>
             {% endif %}
         </section>
     </div>
 
     <aside class="task-sidebar">
-        <div style="display:flex;flex-direction:column;gap:8px;">
+        <div style="display:flex;flex-direction:column;gap:14px;">
             <div>
                 <div class="small">Group</div>
-                <div>{{ task.group.name }}</div>
+                <div style="margin-top:4px;">{{ task.group.name }}</div>
             </div>
             <div>
-                <div class="small">Live</div>
-                <div>{% if task.is_live %}Yes{% else %}No{% endif %}</div>
+                <div class="small">Type</div>
+                <div style="margin-top:4px;">{{ task.get_task_type_display }}</div>
             </div>
             <div>
-                <div class="small">Total submissions</div>
-                <div>{{ submission|length }}</div>
+                <div class="small">Duration</div>
+                <div style="margin-top:4px;">{% if task.duration_minutes %}{{ task.duration_minutes }} min{% else %}No limit{% endif %}</div>
+            </div>
+            <div>
+                <div class="small">Submissions</div>
+                <div style="margin-top:4px;">{{ submission|length }}</div>
+            </div>
+
+            {% if task.is_live %}
+            <div style="border-top:1px solid var(--border);padding-top:14px;">
+                <div class="small" style="margin-bottom:8px;">Live session</div>
+                {% if task.started_at %}
+                <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">Started {{ task.started_at|date:"H:i" }}</div>
+                {% endif %}
+                <button id="toggle-live-btn" class="btn btn-danger" style="width:100%;"
+                    data-task-id="{{ task.id }}" data-is-live="true">
+                    End live session
+                </button>
+            </div>
+            {% else %}
+            <div style="border-top:1px solid var(--border);padding-top:14px;">
+                <div class="small" style="margin-bottom:8px;">Live session</div>
+                <button id="toggle-live-btn" class="btn btn-accent" style="width:100%;"
+                    data-task-id="{{ task.id }}" data-is-live="false">
+                    Start live session
+                </button>
+            </div>
+            {% endif %}
+
+            <div style="border-top:1px solid var(--border);padding-top:14px;">
+                <a href="{% url 'teacher_tasks' %}" class="btn" style="width:100%;text-align:center;display:block;">Back to tasks</a>
             </div>
         </div>
     </aside>
 </div>
+
+<script>
+(function(){
+    function confirmDelete() {
+        if (confirm('Delete this task? This cannot be undone.')) {
+            document.getElementById('delete-form').submit();
+        }
+    }
+    window.confirmDelete = confirmDelete;
+
+    const btn = document.getElementById('toggle-live-btn');
+    if (!btn) return;
+    btn.addEventListener('click', function(){
+        const taskId = btn.dataset.taskId;
+        const originalText = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = 'Updating...';
+        fetch('/tasks/task/toggle-live/' + taskId, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/json' },
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.is_live) {
+                btn.textContent = 'End live session';
+                btn.className = 'btn btn-danger';
+                btn.dataset.isLive = 'true';
+                const badge = document.getElementById('live-badge');
+                if (!badge) {
+                    const meta = document.querySelector('.meta');
+                    if (meta) {
+                        const s = document.createElement('span');
+                        s.id = 'live-badge';
+                        s.className = 'meta-chip meta-chip--live';
+                        s.textContent = 'Live';
+                        meta.appendChild(s);
+                    }
+                }
+                if (data.seconds_left !== null && data.seconds_left !== undefined) {
+                    setTimeout(() => location.reload(), 600);
+                }
+            } else {
+                btn.textContent = 'Start live session';
+                btn.className = 'btn btn-accent';
+                btn.dataset.isLive = 'false';
+                const badge = document.getElementById('live-badge');
+                if (badge) badge.remove();
+            }
+        })
+        .catch(() => { btn.textContent = originalText; })
+        .finally(() => { btn.disabled = false; });
+    });
+})();
+</script>
 {% endblock %}

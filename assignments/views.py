@@ -46,11 +46,47 @@ def student_task_view(request, task_id):
 
 @login_required
 def live_tasks_for_student(request):
-    user = request.user
-    profile = user.profile
-    tasks = Task.objects.filter(submission__submitted = True,group__groupmembership__student=profile, is_live=True).values('id','title','group__name')
-    data = [{'id': t['id'], 'title': t['title'], 'group': t.get('group__name','')} for t in tasks]
+    profile = request.user.profile
+    tasks = Task.objects.filter(
+        group__groupmembership__student=profile,
+        is_live=True
+    ).distinct().values('id', 'title', 'group__name', 'duration_minutes', 'started_at')
+    now = timezone.now()
+    data = []
+    for t in tasks:
+        seconds_left = None
+        if t['duration_minutes'] and t['started_at']:
+            elapsed = (now - t['started_at']).total_seconds()
+            seconds_left = max(0, int(t['duration_minutes'] * 60 - elapsed))
+            if seconds_left == 0:
+                continue
+        data.append({
+            'id': t['id'],
+            'title': t['title'],
+            'group': t['group__name'] or '',
+            'duration_minutes': t['duration_minutes'],
+            'seconds_left': seconds_left,
+        })
     return JsonResponse({'tasks': data})
+
+
+@login_required
+def toggle_live(request, task_id):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+    teacher = request.user.profile
+    task = get_object_or_404(Task, id=task_id, created_by=teacher)
+    task.is_live = not task.is_live
+    task.started_at = timezone.now() if task.is_live else None
+    task.save()
+    seconds_left = None
+    if task.is_live and task.duration_minutes:
+        seconds_left = task.duration_minutes * 60
+    return JsonResponse({
+        'is_live': task.is_live,
+        'started_at': task.started_at.isoformat() if task.started_at else None,
+        'seconds_left': seconds_left,
+    })
 
 
 def submission_task_view(request,submission_id):
@@ -124,15 +160,14 @@ def snapshot_task(request, task_id):
 
 
 
+@login_required
 def submit_task(request, task_id):
-    student = request.user.profile
+    profile = request.user.profile
+    if profile.role == 'teacher':
+        return redirect(reverse('view_task', args=[task_id]))
     task = get_object_or_404(Task, id=task_id)
-
-    submission = get_object_or_404(Submission, task=task, student=student)
-
-    final_submission, created = FinalSubmission.objects.get_or_create(
-        submission=submission,
-    )
+    submission = get_object_or_404(Submission, task=task, student=profile)
+    FinalSubmission.objects.get_or_create(submission=submission)
     submission.submitted = True
     submission.save()
 
@@ -196,7 +231,14 @@ def student_tasks_view(request):
 @login_required
 def teacher_tasks_view(request):
     teacher = request.user.profile
-    tasks = Task.objects.filter(created_by=teacher)
+    from django.db.models import Count, Q
+    tasks = Task.objects.filter(created_by=teacher).annotate(
+        student_submission_count=Count(
+            'submission',
+            filter=Q(submission__student__role='student'),
+            distinct=True
+        )
+    )
     groups = ClassGroup.objects.filter(subject__teacher=teacher)
 
     group_id = request.GET.get('group')
@@ -206,17 +248,37 @@ def teacher_tasks_view(request):
     if group_id:
         tasks = tasks.filter(group__id=group_id)
     if graded == 'graded':
-        tasks = tasks.filter(submission__grade__isnull=False)
+        tasks = tasks.filter(submission__grade__isnull=False, submission__student__role='student')
     elif graded == 'ungraded':
-        tasks = tasks.filter(submission__grade__isnull=True)
+        tasks = tasks.filter(submission__grade__isnull=True, submission__student__role='student')
     if submitted == 'submitted':
-        tasks = tasks.filter(submission__submitted=True)
+        tasks = tasks.filter(submission__submitted=True, submission__student__role='student')
     elif submitted == 'unsubmitted':
-        tasks = tasks.filter(submission__submitted=False)
+        tasks = tasks.filter(submission__submitted=False, submission__student__role='student')
 
     context = {
         'tasks': tasks,
         'groups': groups
     }
 
-    return render(request,'teacher/teacher_tasks.html',context)
+    return render(request, 'teacher/teacher_tasks.html', context)
+
+
+@login_required
+def toggle_live(request, task_id):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+    from django.utils import timezone as tz
+    teacher = request.user.profile
+    task = get_object_or_404(Task, id=task_id, created_by=teacher)
+    task.is_live = not task.is_live
+    task.started_at = tz.now() if task.is_live else None
+    task.save()
+    seconds_left = None
+    if task.is_live and task.duration_minutes:
+        seconds_left = task.duration_minutes * 60
+    return JsonResponse({
+        'is_live': task.is_live,
+        'started_at': task.started_at.isoformat() if task.started_at else None,
+        'seconds_left': seconds_left,
+    })
