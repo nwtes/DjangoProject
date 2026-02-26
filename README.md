@@ -19,6 +19,7 @@
 10. [Agile project management](#agile-project-management)
 11. [Testing documentation](#testing-documentation)
 12. [AI reflection](#ai-reflection-lo8)
+13. [Credits and third-party licences](#credits-and-third-party-licences)
 
 ---
 
@@ -632,4 +633,33 @@ Copilot generated initial test versions for all 5 apps. Key manual corrections:
 ### Summary
 
 AI tools accelerated boilerplate generation and systematic audits (decorator coverage, field references). Query optimisation suggestions (N+1 detection, annotation patterns) and test generation were the highest-value contributions. All generated code was reviewed, tested, and adjusted before committing.
+
+---
+
+## Credits and third-party licences
+
+The following open-source libraries are used in this project. Their licences are reproduced here as required.
+
+| Library | Version | Licence | Notes |
+|---|---|---|---|
+| Django | 5.2 | BSD 3-Clause | Copyright (c) Django Software Foundation and contributors |
+| Django Channels | 4.x | BSD 3-Clause | Copyright (c) Django Software Foundation and contributors |
+| Daphne | 4.x | BSD 3-Clause | Copyright (c) Django Software Foundation and contributors |
+| channels-redis | 4.x | BSD 3-Clause | Copyright (c) Django Software Foundation and contributors |
+| asgiref | 3.x | BSD 3-Clause | Copyright (c) Django Software Foundation and contributors |
+| dj-database-url | 0.5 | BSD 2-Clause | Copyright (c) Kenneth Reitz |
+| psycopg2 | 2.9 | LGPL 3.0 | Copyright (c) Federico Di Gregorio, Daniele Varrazzo |
+| WhiteNoise | 6.x | MIT | Copyright (c) David Evans |
+| django-vite | 3.x | MIT | Copyright (c) MrBin99 |
+| django-environ | 0.x | MIT | Copyright (c) joke2k |
+| sqlparse | 0.5 | BSD 3-Clause | Copyright (c) Andi Albrecht |
+| Vite | 5.x | MIT | Copyright (c) 2019-present Evan You and Vite contributors |
+| CodeMirror 6 | 6.x | MIT | Copyright (c) 2018-2021 by Marijn Haverbeke and others |
+| Pyodide | 0.x | MPL 2.0 | Copyright (c) Pyodide contributors. Used unmodified from CDN; no source changes made. |
+
+**Licence summaries:**
+
+- **MIT / BSD 2-Clause / BSD 3-Clause** — Permission is granted to use, copy, modify, and distribute the software, provided the copyright notice and permission notice are preserved. These libraries are used without modification.
+- **LGPL 3.0 (psycopg2)** — Used as an unmodified library linked at runtime. No modifications to psycopg2 source have been made.
+- **MPL 2.0 (Pyodide)** — Used unmodified, loaded from the official Pyodide CDN. No MPL-covered files have been modified. The full MPL 2.0 licence text is available at https://www.mozilla.org/en-US/MPL/2.0/.
 
