@@ -15,11 +15,32 @@ import json
 
 
 @login_required
-@role_required('student')
 def student_task_view(request, task_id):
-    """Display the task editor page for a student."""
-    student = request.user.profile
+    """Display the task editor page. Teachers access directly; students require the task to be live."""
+    profile = request.user.profile
     task = get_object_or_404(Task, id=task_id)
+
+    if profile.role == 'teacher':
+        autosave_url = reverse("autosave", args=(task_id,))
+        snapshot_url = reverse("snapshot", args=(task_id,))
+        csrf_token = get_token(request)
+        document, _ = TaskDocument.objects.get_or_create(task=task, student=profile)
+        submission = Submission.objects.filter(task=task).first()
+        context = {
+            'initial_content': document.content,
+            'autosave_url': autosave_url,
+            'snapshot_url': snapshot_url,
+            'csrf_token': csrf_token,
+            'task': task,
+            'submission': submission,
+            'document': document,
+            'is_live': task.is_live,
+            'user_role': 'teacher',
+            'user_id': request.user.id
+        }
+        return render(request, "tasks/task.html", context)
+
+    student = profile
     autosave_url = reverse("autosave", args=(task_id,))
     snapshot_url = reverse("snapshot", args=(task_id,))
     csrf_token = get_token(request)

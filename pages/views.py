@@ -119,6 +119,8 @@ def create_task(request):
             task.created_by = teacher
             task.save()
             messages.success(request, "Task created successfully.")
+            if task.is_live:
+                return redirect("task", task_id=task.id)
             return redirect("teacher_dashboard")
     else:
         if request.GET.get("group"):

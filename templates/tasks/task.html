@@ -83,13 +83,19 @@
                 <div class="small">Auto-save is enabled</div>
             </div>
 
+            {% if user_role == "student" %}
             <div class="task-submit">
                 <a class="btn btn-primary" href="{% url 'submit' task.id %}">Submit Task</a>
             </div>
-
             <div class="task-actions">
                 <a class="btn btn-ghost" href="{% url 'student_dashboard' %}">Back to dashboard</a>
             </div>
+            {% else %}
+            <div class="task-actions">
+                <a class="btn btn-ghost" href="{% url 'view_task' task.id %}">Back to task</a>
+                <a class="btn btn-ghost" href="{% url 'teacher_dashboard' %}">Dashboard</a>
+            </div>
+            {% endif %}
         </aside>
     </div>
 
