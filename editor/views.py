@@ -1,15 +1,19 @@
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from django.db.models import Q, Max, OuterRef, Subquery
+from django.db.models import Q
 from .models import DirectMessage
 
+
+@login_required
 def pyodide_editor(request):
+    """Render the standalone Pyodide editor page."""
     return render(request, 'tasks/pyodide_editor.html')
 
 
 @login_required
 def dm_inbox(request):
+    """Display the current user's direct message inbox with conversation summaries."""
     me = request.user
     partners_ids = DirectMessage.objects.filter(
         Q(sender=me) | Q(recipient=me)
@@ -36,20 +40,20 @@ def dm_inbox(request):
 
     conversations.sort(key=lambda c: c['last_msg'].sent_at if c['last_msg'] else 0, reverse=True)
 
-    context = {'conversations': conversations}
-    return render(request, 'dm/inbox.html', context)
+    return render(request, 'dm/inbox.html', {'conversations': conversations})
 
 
 @login_required
 def dm_conversation(request, user_id):
+    """Display the full message thread between the current user and another user."""
     me = request.user
     other = get_object_or_404(User, id=user_id)
-    messages = DirectMessage.objects.filter(
+    messages_qs = DirectMessage.objects.filter(
         Q(sender=me, recipient=other) | Q(sender=other, recipient=me)
     ).order_by('sent_at')
     DirectMessage.objects.filter(sender=other, recipient=me, read=False).update(read=True)
     context = {
         'other': other,
-        'messages': messages,
+        'messages': messages_qs,
     }
     return render(request, 'dm/conversation.html', context)
