@@ -43,44 +43,50 @@
 
             <nav class="nav-links">
                 {% if user.is_authenticated %}
-                    <a class="nav-item" href="{% url 'home' %}">Home</a>
-                    {% if user.profile.role == "teacher" %}
-                        <a class="nav-item" href="{% url 'teacher_dashboard' %}">Teacher dashboard</a>
-                    {% else %}
-                        <a class="nav-item" href="{% url 'student_dashboard' %}">Student dashboard</a>
-                    {% endif %}
-                    {% if user.profile.role == 'teacher' %}
-                        <a class="nav-item" href="{% url 'teacher_groups' %}">My groups</a>
-                    {% endif %}
-                    {% if user.profile.role == 'student' %}
-                        <a class="nav-item" href="{% url 'groups' %}">My groups</a>
-                    {% endif %}
-                    {% if user.profile.role == 'teacher' %}
-                        <a class="nav-item" href="{% url 'teacher_tasks' %}">My tasks
-                        {% if pending_tasks_count %}
-                            <span class="badge">{{ pending_tasks_count }}</span>
-                        {% endif %}
-                        </a>
-                        <a class="nav-item" href="{% url 'create_task' %}">Create task</a>
-                    {% else %}
-                        <a class="nav-item" href="{% url 'student_tasks' %}">My tasks
-                        {% if pending_tasks_count %}
-                            <span class="badge">{{ pending_tasks_count }}</span>
-                        {% endif %}
-                    </a>
-                    {% endif %}
                     {% if user.is_superuser %}
-                        <a class="nav-item" href="{% url 'admin_dashboard' %}">Site Admin</a>
-                    {% endif %}
-                    <a class="nav-item" href="{% url 'dm_inbox' %}">Messages{% if unread_dm_count %}<span class="badge badge-alert">{{ unread_dm_count }}</span>{% endif %}</a>
-                    <form action="{% url 'logout' %}" method="POST">
-                        {% csrf_token %}
-                        <button type="submit" class="nav-item logout">Logout
-                            {% if ungraded_count %}
-                                <span class="badge badge-alert">{{ ungraded_count }}</span>
+                        <a class="nav-item" href="{% url 'admin_dashboard' %}">Admin Dashboard</a>
+                        <div class="nav-divider"></div>
+                        <form action="{% url 'logout' %}" method="POST">
+                            {% csrf_token %}
+                            <button type="submit" class="nav-item logout">Logout</button>
+                        </form>
+                    {% else %}
+                        <a class="nav-item" href="{% url 'home' %}">Home</a>
+                        {% if user.profile.role == "teacher" %}
+                            <a class="nav-item" href="{% url 'teacher_dashboard' %}">Teacher dashboard</a>
+                        {% else %}
+                            <a class="nav-item" href="{% url 'student_dashboard' %}">Student dashboard</a>
+                        {% endif %}
+                        {% if user.profile.role == 'teacher' %}
+                            <a class="nav-item" href="{% url 'teacher_groups' %}">My groups</a>
+                        {% endif %}
+                        {% if user.profile.role == 'student' %}
+                            <a class="nav-item" href="{% url 'groups' %}">My groups</a>
+                        {% endif %}
+                        {% if user.profile.role == 'teacher' %}
+                            <a class="nav-item" href="{% url 'teacher_tasks' %}">My tasks
+                            {% if pending_tasks_count %}
+                                <span class="badge">{{ pending_tasks_count }}</span>
                             {% endif %}
-                        </button>
-                    </form>
+                            </a>
+                            <a class="nav-item" href="{% url 'create_task' %}">Create task</a>
+                        {% else %}
+                            <a class="nav-item" href="{% url 'student_tasks' %}">My tasks
+                            {% if pending_tasks_count %}
+                                <span class="badge">{{ pending_tasks_count }}</span>
+                            {% endif %}
+                            </a>
+                        {% endif %}
+                        <a class="nav-item" href="{% url 'dm_inbox' %}">Messages{% if unread_dm_count %}<span class="badge badge-alert">{{ unread_dm_count }}</span>{% endif %}</a>
+                        <form action="{% url 'logout' %}" method="POST">
+                            {% csrf_token %}
+                            <button type="submit" class="nav-item logout">Logout
+                                {% if ungraded_count %}
+                                    <span class="badge badge-alert">{{ ungraded_count }}</span>
+                                {% endif %}
+                            </button>
+                        </form>
+                    {% endif %}
                 {% else %}
                     <a class="nav-item" href="{% url 'home' %}">Home</a>
                     <a class="nav-item" href="{% url 'login' %}">Login</a>

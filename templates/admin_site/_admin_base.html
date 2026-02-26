@@ -33,7 +33,10 @@
                 <a class="nav-item {% block nav_subjects %}{% endblock %}" href="{% url 'admin_subjects' %}">Subjects</a>
                 <a class="nav-item {% block nav_groups %}{% endblock %}" href="{% url 'admin_groups' %}">Groups</a>
                 <div class="nav-divider"></div>
-                <a class="nav-item" href="{% url 'home' %}">← Back to Site</a>
+                <form action="{% url 'logout' %}" method="POST">
+                    {% csrf_token %}
+                    <button type="submit" class="nav-item logout">Logout</button>
+                </form>
             </nav>
         </aside>
 

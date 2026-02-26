@@ -34,6 +34,8 @@ class RoleBasedLoginView(LoginView):
     def get_success_url(self):
         """Return the URL to redirect to after a successful login."""
         user = self.request.user
+        if user.is_superuser:
+            return "/admin-site/"
         role = user.profile.role
         if role == "teacher":
             return "/teacher/dashboard"
